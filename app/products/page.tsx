@@ -1,6 +1,6 @@
 import { Metadata } from "next"
-import { ProductsGrid } from "@/components/products-grid"
-import ProductsHero from "@/components/products-hero";
+import { ProductsGrid } from "@/components/productspage-components/products-grid"
+import ProductsHero from "@/components/productspage-components/products-hero";
 
 export const metadata: Metadata = {
   title: "Products - SM Chemicals",
