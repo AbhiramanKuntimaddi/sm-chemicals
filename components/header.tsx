@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {useState, useEffect, useCallback, useRef} from "react";
+import {useState, useEffect, useRef} from "react";
 import {usePathname} from "next/navigation";
 import {motion, AnimatePresence} from "framer-motion";
 
@@ -16,7 +16,7 @@ export function Header() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const [visible, setVisible] = useState(true);
-    const [isDark, setIsDark] = useState(true);
+    const [isDark] = useState(true);
 
     const pathname = usePathname();
     const lastScrollY = useRef(0);

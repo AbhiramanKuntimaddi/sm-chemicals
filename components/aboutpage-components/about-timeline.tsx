@@ -67,7 +67,7 @@ export function AboutTimeline() {
 
                 <div
                     className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-background-200 border border-background-200">
-                    {timeline.map((item, index) => (
+                    {timeline.map((item) => (
                         <motion.div
                             key={item.year}
                             variants={itemVariants}
