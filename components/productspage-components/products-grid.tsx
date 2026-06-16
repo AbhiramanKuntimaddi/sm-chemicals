@@ -1,215 +1,304 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-    ChevronRight,
-    ArrowRight,
-    ChevronLeft,
-    FileText,
-    Download,
-    X,
-    Send,
-    Square,
-    CheckSquare,
-    CheckCircle2
-} from "lucide-react";
-import { products } from "@/data/products";
+import {useState, useRef, useEffect} from "react";
+import Link from "next/link";
+import {useGSAP} from "@gsap/react";
+import {gsap, ScrollTrigger} from "@/lib/gsap";
+import {getLenis} from "@/lib/smooth-scroll";
+import {X, ArrowUpRight, ArrowRight} from "lucide-react";
+import {productCategories, type Product, type ProductSpec} from "@/data/products";
+
+const SPEC_LABELS: { key: keyof ProductSpec; label: string }[] = [
+    {key: "chemicalName", label: "Chemical Name"},
+    {key: "formula", label: "Formula"},
+    {key: "cas", label: "CAS No."},
+    {key: "appearance", label: "Appearance"},
+    {key: "purity", label: "Purity"},
+    {key: "grade", label: "Grade"},
+    {key: "solidContent", label: "Solid Content"},
+    {key: "packaging", label: "Packaging"},
+    {key: "endUse", label: "End Use"},
+    {key: "synonyms", label: "Synonyms"},
+];
+
+const CARD_PRIORITY: { key: keyof ProductSpec; label: string }[] = [
+    {key: "cas", label: "CAS"},
+    {key: "purity", label: "Purity"},
+    {key: "appearance", label: "Appearance"},
+    {key: "grade", label: "Grade"},
+    {key: "endUse", label: "Use"},
+];
+
+const HEADER_OFFSET = 110;
 
 export function ProductsGrid() {
-    const [selectedProduct, setSelectedProduct] = useState(products[0]);
-    const [selectedChemicals, setSelectedChemicals] = useState<string[]>([]);
-    const [isMobileView, setIsMobileView] = useState(false);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [activeId, setActiveId] = useState(productCategories[0].id);
+    const [openProduct, setOpenProduct] = useState<Product | null>(null);
 
-    const displayProduct = useMemo(() => {
-        return products.find(p => p.id === selectedProduct?.id) || products[0];
-    }, [selectedProduct]);
+    const rootRef = useRef<HTMLDivElement>(null);
+    const drawerRef = useRef<HTMLDivElement>(null);
+    const panelRef = useRef<HTMLDivElement>(null);
 
-    const toggleChemical = (item: string) => {
-        setSelectedChemicals(prev =>
-            prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]
+    const scrollToCategory = (id: string) => {
+        const el = document.getElementById(`cat-${id}`);
+        if (!el) return;
+        const lenis = getLenis();
+        if (lenis) lenis.scrollTo(el, {offset: -HEADER_OFFSET});
+        else window.scrollTo({top: el.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET, behavior: "smooth"});
+    };
+
+    useEffect(() => {
+        const target = sessionStorage.getItem("smc:scrollCategory");
+        if (!target) return;
+        sessionStorage.removeItem("smc:scrollCategory");
+        if (!productCategories.some((c) => c.id === target)) return;
+        const t = setTimeout(() => scrollToCategory(target), 350);
+        return () => clearTimeout(t);
+    }, []);
+
+    useEffect(() => {
+        const sections = productCategories
+            .map((c) => document.getElementById(`cat-${c.id}`))
+            .filter((el): el is HTMLElement => Boolean(el));
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) setActiveId(entry.target.id.replace("cat-", ""));
+                });
+            },
+            {rootMargin: "-25% 0px -65% 0px", threshold: 0},
         );
+
+        sections.forEach((el) => observer.observe(el));
+        return () => observer.disconnect();
+    }, []);
+
+    useGSAP(() => {
+        gsap.set(".pg-card", {autoAlpha: 0, y: 24});
+        ScrollTrigger.batch(".pg-card", {
+            start: "top 92%",
+            onEnter: (els) =>
+                gsap.to(els, {autoAlpha: 1, y: 0, duration: 0.5, stagger: 0.06, ease: "expo", overwrite: true}),
+        });
+    }, {scope: rootRef});
+
+    useGSAP(() => {
+        if (!openProduct || !drawerRef.current || !panelRef.current) return;
+        getLenis()?.stop();
+        gsap.fromTo(drawerRef.current, {autoAlpha: 0}, {autoAlpha: 1, duration: 0.3, ease: "power2.out"});
+        gsap.fromTo(panelRef.current, {xPercent: 100}, {xPercent: 0, duration: 0.5, ease: "expo"});
+    }, {dependencies: [openProduct]});
+
+    const closeDrawer = () => {
+        getLenis()?.start();
+        if (!drawerRef.current || !panelRef.current) {
+            setOpenProduct(null);
+            return;
+        }
+        gsap.to(panelRef.current, {xPercent: 100, duration: 0.4, ease: "power2.in"});
+        gsap.to(drawerRef.current, {autoAlpha: 0, duration: 0.4, ease: "power2.in", onComplete: () => setOpenProduct(null)});
     };
 
-    const containerVariants = {
-        hidden: { opacity: 0 },
-        visible: { opacity: 1, transition: { staggerChildren: 0.04 } }
-    };
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => e.key === "Escape" && closeDrawer();
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, []);
 
-    const itemVariants = {
-        hidden: { opacity: 0, y: 10 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
-    };
+    const drawerSpecs = openProduct ? SPEC_LABELS.filter(({key}) => openProduct.spec[key]) : [];
 
     return (
-        <section className="bg-white h-auto selection:bg-background-500 selection:text-text-950 font-sans" data->
-            <div className="max-w-400 mx-auto px-0 lg:px-6 py-6 lg:py-12">
+        <section ref={rootRef} className="bg-white text-text-950 selection:bg-accent-500 selection:text-black font-sans">
 
-                <div className="flex flex-col lg:flex-row border-y lg:border border-background-200 h-auto lg:h-200 overflow-hidden relative">
+            {/* Mobile sticky jump bar */}
+            <nav className="lg:hidden sticky top-20 z-30 bg-white/90 backdrop-blur-md border-b border-black/10">
+                <div className="flex gap-2 overflow-x-auto no-scrollbar px-4 py-3">
+                    {productCategories.map((cat) => (
+                        <button
+                            key={cat.id}
+                            onClick={() => scrollToCategory(cat.id)}
+                            className={`shrink-0 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.18em] rounded-full border transition-colors ${
+                                activeId === cat.id
+                                    ? "bg-text-950 text-white border-text-950"
+                                    : "text-text-950/55 border-black/12"
+                            }`}
+                        >
+                            {cat.name}
+                        </button>
+                    ))}
+                </div>
+            </nav>
 
-                    <aside className={`w-full lg:w-100 bg-background-50 border-r border-background-200 flex flex-col shrink-0 ${
-                        isMobileView ? "hidden lg:flex" : "flex"
-                    }`}>
-                        <div className="p-8 border-b border-background-200 bg-white shrink-0">
-                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-text-400">Product Portfolio</span>
-                        </div>
-                        <div className="flex-1 overflow-y-auto no-scrollbar">
-                            {products.map((product) => (
-                                <button
-                                    key={product.id}
-                                    onClick={() => {
-                                        setSelectedProduct(product);
-                                        setSelectedChemicals([]);
-                                        setIsMobileView(true);
-                                    }}
-                                    className={`w-full text-left p-8 border-b border-background-100 transition-all relative ${
-                                        displayProduct?.id === product.id ? "bg-white" : "hover:bg-white/50"
-                                    }`}
-                                >
-                                    {displayProduct?.id === product.id && (
-                                        <motion.div layoutId="active" className="absolute left-0 top-0 bottom-0 w-1.5 bg-background-500" />
-                                    )}
-                                    <div className="flex items-center justify-between">
-                                        <h3 className={`text-base font-bold uppercase tracking-tight leading-tight pr-4 ${
-                                            displayProduct?.id === product.id ? "text-text-950" : "text-text-500"
-                                        }`}>
-                                            {product.name}
-                                        </h3>
-                                        <ChevronRight size={16} className={displayProduct?.id === product.id ? "text-background-500" : "text-text-200"} />
-                                    </div>
-                                </button>
-                            ))}
+            <div className="mx-auto max-w-7xl px-6 lg:px-10 py-16 lg:py-24">
+                <div className="flex flex-col lg:flex-row gap-12 lg:gap-16">
+
+                    {/* Desktop sticky jump nav */}
+                    <aside className="hidden lg:block w-60 shrink-0">
+                        <div className="sticky top-32">
+                            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-text-950/40 block mb-6">
+                                Portfolio
+                            </span>
+                            <ul className="space-y-1">
+                                {productCategories.map((cat) => (
+                                    <li key={cat.id}>
+                                        <button
+                                            onClick={() => scrollToCategory(cat.id)}
+                                            className="group flex items-baseline gap-3 w-full text-left py-1.5"
+                                        >
+                                            <span
+                                                className={`h-px transition-all duration-300 ${
+                                                    activeId === cat.id ? "w-6 bg-background-600" : "w-2 bg-black/20 group-hover:w-4"
+                                                }`}
+                                            />
+                                            <span
+                                                className={`text-[13px] font-medium tracking-tight transition-colors ${
+                                                    activeId === cat.id ? "text-text-950" : "text-text-950/45 group-hover:text-text-950/80"
+                                                }`}
+                                            >
+                                                {cat.name}
+                                            </span>
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
                         </div>
                     </aside>
 
-                    <main className={`flex-1 bg-white flex flex-col min-w-0 ${
-                        isMobileView ? "flex" : "hidden lg:flex"
-                    }`}>
-                        <AnimatePresence mode="wait">
-                            <motion.div
-                                key={displayProduct.id}
-                                variants={containerVariants}
-                                initial="hidden"
-                                animate="visible"
-                                className="h-full flex flex-col"
-                            >
-                                <div className="lg:hidden p-6 border-b border-background-200 bg-background-50 flex items-center shrink-0">
-                                    <button onClick={() => setIsMobileView(false)} className="text-[10px] font-black uppercase text-text-950 flex items-center gap-2">
-                                        <ChevronLeft size={16} /> Portfolio Index
-                                    </button>
-                                </div>
-
-                                <div className="p-8 lg:p-20 flex-1 overflow-y-auto no-scrollbar">
-                                    <motion.p variants={itemVariants} className="text-text-500 text-lg lg:text-xl leading-relaxed max-w-3xl mb-12 font-medium">
-                                        {displayProduct.description}
-                                    </motion.p>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-0 border-t border-background-200 pt-16">
-                                        <div className="md:pr-12 md:border-r border-background-100">
-                                            <motion.h4 variants={itemVariants} className="text-[12px] font-black uppercase tracking-[0.3em] text-text-950 mb-10 border-b-2 border-background-500 w-fit pb-1">
-                                                Chemicals List
-                                            </motion.h4>
-                                            <div className="space-y-6">
-                                                {displayProduct.items.map((item: string) => (
-                                                    <motion.div
-                                                        key={item}
-                                                        variants={itemVariants}
-                                                        className="flex items-start gap-4"
-                                                    >
-                                                        <CheckCircle2 size={18} className="text-background-500 shrink-0 mt-0.5" />
-                                                        <span className="text-xs font-bold uppercase tracking-tight text-text-950">
-                                                            {item}
-                                                        </span>
-                                                    </motion.div>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        <div className="md:pl-12 flex flex-col justify-start">
-                                            <motion.div variants={itemVariants} className="p-8 bg-background-50 border-l-4 border-background-500">
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-background-500 mb-6 block">Documentation</span>
-                                                <button className="w-full py-5 px-6 bg-white border border-background-200 flex items-center justify-between group hover:border-text-950 transition-all">
-                                                    <div className="flex items-center gap-3">
-                                                        <FileText size={20} className="text-text-400 group-hover:text-text-950" />
-                                                        <span className="text-[10px] font-black uppercase tracking-widest text-text-950">Technical Datasheet</span>
-                                                    </div>
-                                                    <Download size={18} className="text-background-500 group-hover:translate-y-0.5 transition-transform" />
-                                                </button>
-                                            </motion.div>
-                                        </div>
+                    {/* Stacked category sections */}
+                    <div className="flex-1 min-w-0 space-y-24">
+                        {productCategories.map((cat) => (
+                            <section key={cat.id} id={`cat-${cat.id}`} className="scroll-mt-32">
+                                <div className="flex items-end justify-between gap-6 border-b border-black/10 pb-6 mb-10">
+                                    <div>
+                                        <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-background-600 block mb-3">
+                                            {String(cat.products.length).padStart(2, "0")} Products
+                                        </span>
+                                        <h2 className="text-3xl lg:text-4xl font-semibold tracking-tight text-text-950">
+                                            {cat.name}
+                                        </h2>
                                     </div>
                                 </div>
+                                <p className="text-text-950/55 text-sm lg:text-base leading-relaxed max-w-2xl mb-10 -mt-4">
+                                    {cat.blurb}
+                                </p>
 
-                                <motion.button
-                                    onClick={() => setIsModalOpen(true)}
-                                    variants={itemVariants}
-                                    className="w-full py-12 bg-text-950 text-white flex items-center justify-center gap-8 group hover:bg-background-500 transition-colors duration-300 shrink-0"
-                                >
-                                    <span className="text-sm font-black uppercase tracking-[0.5em]">Request Technical Quote</span>
-                                    <ArrowRight size={24} className="group-hover:translate-x-4 transition-transform duration-500" />
-                                </motion.button>
-                            </motion.div>
-                        </AnimatePresence>
-                    </main>
-
-                    <AnimatePresence>
-                        {isModalOpen && (
-                            <motion.div
-                                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                                className="fixed inset-0 z-50 flex items-center justify-center bg-text-950/90 p-4"
-                            >
-                                <motion.div
-                                    initial={{ scale: 0.98, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.98, opacity: 0 }}
-                                    className="bg-white w-full max-w-2xl border border-background-200 max-h-[90vh] flex flex-col"
-                                >
-                                    <div className="p-8 border-b border-background-200 flex justify-between items-center bg-background-50 shrink-0">
-                                        <div className="space-y-1">
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-background-500">Inquiry Specification</span>
-                                            <h3 className="text-xl font-bold uppercase text-text-950 tracking-tighter">{displayProduct.name}</h3>
-                                        </div>
-                                        <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-background-200 transition-colors"><X size={24} /></button>
-                                    </div>
-
-                                    <div className="p-8 space-y-8 overflow-y-auto no-scrollbar">
-                                        <div className="space-y-4">
-                                            <p className="text-[10px] font-black uppercase text-text-400 tracking-[0.2em]">Select Chemicals for Quote:</p>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                {displayProduct.items.map((item) => (
-                                                    <button
-                                                        key={item}
-                                                        onClick={() => toggleChemical(item)}
-                                                        className={`flex items-center gap-3 p-3 border transition-all text-left ${
-                                                            selectedChemicals.includes(item)
-                                                                ? "border-background-500 bg-background-50"
-                                                                : "border-background-100 hover:border-background-200"
-                                                        }`}
-                                                    >
-                                                        <div className={selectedChemicals.includes(item) ? "text-background-500" : "text-text-100"}>
-                                                            {selectedChemicals.includes(item) ? <CheckSquare size={18} /> : <Square size={18} />}
-                                                        </div>
-                                                        <span className="text-[10px] font-bold uppercase tracking-tight text-text-950">{item}</span>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-background-100">
-                                            <input type="text" placeholder="NAME" className="w-full p-4 border border-background-200 text-[10px] font-bold uppercase focus:border-background-500 outline-none" />
-                                            <input type="email" placeholder="EMAIL" className="w-full p-4 border border-background-200 text-[10px] font-bold uppercase focus:border-background-500 outline-none" />
-                                        </div>
-                                        <textarea rows={3} placeholder="PROJECT SPECIFICATIONS" className="w-full p-4 border border-background-200 text-[10px] font-bold uppercase focus:border-background-500 outline-none" />
-                                    </div>
-
-                                    <button className="w-full py-8 bg-background-500 text-text-950 font-black uppercase tracking-[0.4em] flex items-center justify-center gap-4 hover:bg-text-950 hover:text-white transition-all shrink-0">
-                                        Send Request {selectedChemicals.length > 0 && `(${selectedChemicals.length})`} <Send size={18} />
-                                    </button>
-                                </motion.div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                                    {cat.products.map((product) => (
+                                        <ProductCard
+                                            key={product.id}
+                                            product={product}
+                                            onOpen={() => setOpenProduct(product)}
+                                        />
+                                    ))}
+                                </div>
+                            </section>
+                        ))}
+                    </div>
                 </div>
             </div>
+
+            {/* Detail drawer */}
+            {openProduct && (
+                <div ref={drawerRef} className="fixed inset-0 z-50 flex justify-end">
+                    <div className="absolute inset-0 bg-text-950/40 backdrop-blur-sm" onClick={closeDrawer} />
+                    <div
+                        ref={panelRef}
+                        className="relative h-full w-full max-w-xl bg-white flex flex-col shadow-2xl"
+                    >
+                        <div className="flex items-start justify-between gap-6 p-8 lg:p-10 border-b border-black/10">
+                            <div>
+                                {openProduct.spec.chemicalName && openProduct.spec.chemicalName !== openProduct.name && (
+                                    <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-background-600 block mb-3">
+                                        {openProduct.spec.chemicalName}
+                                    </span>
+                                )}
+                                <h3 className="text-2xl lg:text-3xl font-semibold tracking-tight text-text-950 leading-tight">
+                                    {openProduct.name}
+                                </h3>
+                            </div>
+                            <button
+                                onClick={closeDrawer}
+                                className="shrink-0 p-2 -mr-2 text-text-950/40 hover:text-text-950 transition-colors"
+                                aria-label="Close"
+                            >
+                                <X size={22} />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-8 lg:p-10 space-y-10">
+                            <p className="text-text-950/65 text-sm lg:text-[15px] leading-relaxed">
+                                {openProduct.description}
+                            </p>
+
+                            {drawerSpecs.length > 0 && (
+                                <div>
+                                    <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-text-950/40 block mb-5">
+                                        Specifications
+                                    </span>
+                                    <dl className="divide-y divide-black/8 border-y border-black/8">
+                                        {drawerSpecs.map(({key, label}) => (
+                                            <div key={key} className="flex gap-6 py-3.5">
+                                                <dt className="w-32 shrink-0 text-[11px] font-bold uppercase tracking-[0.12em] text-text-950/40 pt-0.5">
+                                                    {label}
+                                                </dt>
+                                                <dd className="text-sm font-medium text-text-950 break-words">
+                                                    {openProduct.spec[key]}
+                                                </dd>
+                                            </div>
+                                        ))}
+                                    </dl>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="p-8 lg:p-10 border-t border-black/10">
+                            <Link
+                                href="/contact"
+                                className="group flex items-center justify-center gap-3 w-full bg-text-950 text-white py-4 text-[11px] font-bold uppercase tracking-[0.25em] hover:bg-background-600 transition-colors"
+                            >
+                                Request a Quote
+                                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            )}
         </section>
+    );
+}
+
+function ProductCard({product, onOpen}: { product: Product; onOpen: () => void }) {
+    const keySpecs = CARD_PRIORITY.filter(({key}) => product.spec[key]).slice(0, 2);
+    return (
+        <button
+            onClick={onOpen}
+            className="pg-card group text-left flex flex-col h-full border border-black/10 bg-white p-6 transition-all duration-300 hover:border-background-600 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_-12px_rgba(0,0,0,0.18)]"
+        >
+            <div className="flex items-start justify-between gap-3 mb-3">
+                <h3 className="text-base font-semibold tracking-tight text-text-950 leading-snug">
+                    {product.name}
+                </h3>
+                <ArrowUpRight
+                    size={18}
+                    className="shrink-0 text-text-950/25 group-hover:text-background-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all"
+                />
+            </div>
+
+            <p className="text-[13px] leading-relaxed text-text-950/50 line-clamp-2 mb-6">
+                {product.description}
+            </p>
+
+            {keySpecs.length > 0 && (
+                <dl className="mt-auto flex flex-wrap gap-x-6 gap-y-2 pt-4 border-t border-black/8">
+                    {keySpecs.map(({key, label}) => (
+                        <div key={key} className="min-w-0">
+                            <dt className="text-[9px] font-bold uppercase tracking-[0.2em] text-text-950/35">{label}</dt>
+                            <dd className="text-[12px] font-medium text-text-950/80 truncate">{product.spec[key]}</dd>
+                        </div>
+                    ))}
+                </dl>
+            )}
+        </button>
     );
 }

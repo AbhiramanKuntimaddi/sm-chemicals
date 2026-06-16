@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import {motion, Variants} from "framer-motion";
+import {useReveal} from "@/hooks/use-reveal";
 
 const timeline = [
     {
@@ -26,17 +26,9 @@ const timeline = [
     },
 ];
 
-const itemVariants: Variants = {
-    initial: {opacity: 0, y: 30, filter: "blur(8px)"},
-    whileInView: {
-        opacity: 1,
-        y: 0,
-        filter: "blur(0px)",
-        transition: {duration: 1, ease: [0.19, 1, 0.22, 1]}
-    }
-};
-
 export function AboutTimeline() {
+    const scope = useReveal<HTMLDivElement>({scroll: true, stagger: 0.1, start: "top 85%"});
+
     return (
         <section
             data-header-theme="dark"
@@ -66,14 +58,12 @@ export function AboutTimeline() {
                 </div>
 
                 <div
+                    ref={scope}
                     className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-background-200 border border-background-200">
                     {timeline.map((item) => (
-                        <motion.div
+                        <div
                             key={item.year}
-                            variants={itemVariants}
-                            initial="initial"
-                            whileInView="whileInView"
-                            viewport={{once: true, margin: "-100px"}}
+                            data-reveal
                             className="bg-background-50 p-12 hover:bg-accent-500/2 transition-colors group relative overflow-hidden"
                         >
                             <div className="relative z-10">
@@ -93,7 +83,7 @@ export function AboutTimeline() {
 
                             <div
                                 className="absolute top-0 left-0 w-8 h-8 border-t border-l border-accent-500/0 group-hover:border-accent-500/20 transition-all duration-700"/>
-                        </motion.div>
+                        </div>
                     ))}
                 </div>
             </div>

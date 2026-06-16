@@ -1,19 +1,18 @@
 "use client";
 
-import React, {useRef} from "react";
+import React from "react";
 import Link from "next/link";
-import {motion, useInView} from "framer-motion";
 import {ArrowRight} from "lucide-react";
+import {useReveal} from "@/hooks/use-reveal";
 
 export function CtaSection() {
-    const ref = useRef(null);
-    const isInView = useInView(ref, {once: true, margin: "-10%"});
+    const scope = useReveal<HTMLDivElement>({scroll: true, y: 20, blur: 0, stagger: 0.1, duration: 0.8, start: "top 90%"});
 
     return (
         <section
             className="relative py-32 bg-background-50 text-text-950 overflow-hidden selection:bg-background-500 selection:text-black">
 
-            <div ref={ref} className="relative z-10 mx-auto max-w-7xl px-6">
+            <div ref={scope} className="relative z-10 mx-auto max-w-7xl px-6">
 
                 <div className="flex flex-col items-center text-center mb-16">
                     <div className="flex items-center gap-4 mb-8">
@@ -32,12 +31,7 @@ export function CtaSection() {
 
                 <div className="flex flex-col items-center justify-center">
 
-                    <motion.div
-                        initial={{opacity: 0, y: 20}}
-                        animate={isInView ? {opacity: 1, y: 0} : {}}
-                        transition={{duration: 0.8, ease: [0.19, 1, 0.22, 1]}}
-                        className="flex flex-col items-center"
-                    >
+                    <div data-reveal className="flex flex-col items-center">
                         <p className="text-[14px] md:text-[16px] text-text-500 font-medium leading-relaxed mb-12 text-center max-w-2xl uppercase tracking-tight">
                             Partner with <span className="text-text-950 font-black">SM Chemicals</span> for reliable,
                             high-purity industrial compounds tailored to your exact requirements.
@@ -64,7 +58,7 @@ export function CtaSection() {
                                 <ArrowRight className="h-4 w-4"/>
                             </Link>
                         </div>
-                    </motion.div>
+                    </div>
 
                     <div
                         className="flex flex-col md:flex-row items-center gap-12 md:gap-24 py-12 border-t border-background-200 w-full justify-center">
@@ -79,13 +73,11 @@ export function CtaSection() {
                                 label: "Official Inquiry",
                                 value: "info@smchemicals.co.in",
                             },
-                        ].map((item, i) => (
-                            <motion.a
+                        ].map((item) => (
+                            <a
                                 key={item.href}
                                 href={item.href}
-                                initial={{opacity: 0}}
-                                animate={isInView ? {opacity: 1} : {}}
-                                transition={{delay: 0.3 + i * 0.1}}
+                                data-reveal
                                 className="group flex flex-col items-center text-center"
                             >
                          <span className="text-[10px] font-black text-background-500 uppercase tracking-[0.4em] mb-3">
@@ -95,7 +87,7 @@ export function CtaSection() {
                                     className="text-lg md:text-xl text-text-950 font-light tracking-tight group-hover:text-background-500 transition-colors duration-500">
                             {item.value}
                          </span>
-                            </motion.a>
+                            </a>
                         ))}
                     </div>
 

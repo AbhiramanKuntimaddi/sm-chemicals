@@ -2,17 +2,7 @@
 
 import React from "react";
 import {Shield, Clock, Award, CheckCircle2} from "lucide-react";
-import {motion, Variants} from "framer-motion";
-
-const itemVariants: Variants = {
-    initial: {opacity: 0, y: 30, filter: "blur(8px)"},
-    whileInView: {
-        opacity: 1,
-        y: 0,
-        filter: "blur(0px)",
-        transition: {duration: 0.8, ease: [0.19, 1, 0.22, 1]}
-    }
-};
+import {useReveal} from "@/hooks/use-reveal";
 
 export function AboutCertifications() {
     const specs = [
@@ -21,6 +11,8 @@ export function AboutCertifications() {
         {icon: Award, title: "Certified", detail: "Safety Standards"},
         {icon: CheckCircle2, title: "Reliable", detail: "Pan-India Delivery"},
     ];
+
+    const scope = useReveal<HTMLDivElement>({scroll: true, duration: 0.8, stagger: 0.1, start: "top 85%"});
 
     return (
         <section
@@ -49,14 +41,12 @@ export function AboutCertifications() {
                     </div>
 
                     <div
+                        ref={scope}
                         className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-background-200 border border-background-200 h-full">
                         {specs.map((item, i) => (
-                            <motion.div
+                            <div
                                 key={i}
-                                variants={itemVariants}
-                                initial="initial"
-                                whileInView="whileInView"
-                                viewport={{once: true, margin: "-50px"}}
+                                data-reveal
                                 className="p-12 bg-background-50 hover:bg-background-100 transition-colors duration-300 group relative overflow-hidden flex flex-col justify-between"
                             >
                                 <item.icon
@@ -73,7 +63,7 @@ export function AboutCertifications() {
 
                                 <div
                                     className="absolute top-0 right-0 w-4 h-4 border-t border-r border-background-200 opacity-0 group-hover:opacity-100 transition-opacity"/>
-                            </motion.div>
+                            </div>
                         ))}
                     </div>
                 </div>

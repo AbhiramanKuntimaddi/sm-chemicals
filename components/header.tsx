@@ -3,7 +3,8 @@
 import Link from "next/link";
 import {useState, useEffect, useRef} from "react";
 import {usePathname} from "next/navigation";
-import {motion, AnimatePresence} from "framer-motion";
+import {useGSAP} from "@gsap/react";
+import {gsap} from "@/lib/gsap";
 
 const navigation = [
     {name: "Home", href: "/"},
@@ -11,6 +12,8 @@ const navigation = [
     {name: "About", href: "/about"},
     {name: "Contact", href: "/contact"},
 ];
+
+const CLIP = (r: number) => `circle(${r}% at calc(100% - 48px) 48px)`;
 
 export function Header() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -20,6 +23,10 @@ export function Header() {
 
     const pathname = usePathname();
     const lastScrollY = useRef(0);
+
+    const headerRef = useRef<HTMLElement>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
+    const clipRef = useRef(0);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -49,11 +56,53 @@ export function Header() {
         document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
     }, [mobileMenuOpen]);
 
+    useGSAP(() => {
+        gsap.to(headerRef.current, {
+            y: visible ? 0 : -100,
+            duration: 0.6,
+            ease: "smooth",
+        });
+    }, {dependencies: [visible]});
+
+    useGSAP(() => {
+        const menu = menuRef.current;
+        if (!menu) return;
+
+        if (mobileMenuOpen) {
+            menu.style.pointerEvents = "auto";
+            gsap.to(clipRef, {
+                current: 150,
+                duration: 0.8,
+                ease: "expo",
+                onUpdate: () => {
+                    menu.style.clipPath = CLIP(clipRef.current);
+                },
+            });
+            gsap.fromTo(
+                ".menu-item",
+                {x: -20, autoAlpha: 0},
+                {x: 0, autoAlpha: 1, duration: 0.5, stagger: 0.08, delay: 0.1, ease: "power2.out"},
+            );
+        } else {
+            gsap.to(clipRef, {
+                current: 0,
+                duration: 0.8,
+                ease: "expo",
+                onUpdate: () => {
+                    menu.style.clipPath = CLIP(clipRef.current);
+                },
+                onComplete: () => {
+                    menu.style.pointerEvents = "none";
+                },
+            });
+        }
+    }, {dependencies: [mobileMenuOpen]});
+
+    const barBase = `h-px transition-[transform,width,opacity,background-color] duration-500 ${isDark || mobileMenuOpen ? 'bg-white' : 'bg-black'}`;
+
     return (
-        <motion.header
-            initial={{y: 0}}
-            animate={{y: visible ? 0 : -100}}
-            transition={{duration: 0.6, ease: [0.22, 1, 0.36, 1]}}
+        <header
+            ref={headerRef}
             className="fixed top-0 left-0 right-0 z-100"
         >
             <div className={`absolute inset-0 transition-all duration-500 ${
@@ -91,11 +140,9 @@ export function Header() {
                                         }`}>
                                         {item.name}
                                     </span>
-                                    <motion.div
-                                        className="absolute bottom-0 left-0 h-px bg-accent-500"
-                                        initial={false}
-                                        animate={{width: isActive ? "100%" : "0%"}}
-                                        transition={{duration: 0.4, ease: [0.16, 1, 0.3, 1]}}
+                                    <span
+                                        className="absolute bottom-0 left-0 h-px bg-accent-500 transition-[width] duration-400 ease-[0.16,1,0.3,1]"
+                                        style={{width: isActive ? "100%" : "0%"}}
                                     />
                                 </Link>
                             );
@@ -116,63 +163,41 @@ export function Header() {
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                             className="lg:hidden relative z-110 flex flex-col items-end gap-1.5 p-2 -mr-2"
                         >
-                            <motion.span
-                                animate={mobileMenuOpen ? {rotate: 45, y: 7.5, width: "24px"} : {
-                                    rotate: 0,
-                                    y: 0,
-                                    width: "24px"
-                                }}
-                                className={`h-px transition-colors duration-500 ${isDark || mobileMenuOpen ? 'bg-white' : 'bg-black'}`}
+                            <span
+                                className={`${barBase} w-6 origin-center ${mobileMenuOpen ? 'rotate-45 translate-y-[7.5px]' : ''}`}
                             />
-                            <motion.span
-                                animate={mobileMenuOpen ? {opacity: 0, x: 10} : {opacity: 1, x: 0}}
-                                className={`w-4 h-px transition-colors duration-500 ${isDark || mobileMenuOpen ? 'bg-white' : 'bg-black'}`}
+                            <span
+                                className={`${barBase} w-4 ${mobileMenuOpen ? 'opacity-0 translate-x-[10px]' : 'opacity-100'}`}
                             />
-                            <motion.span
-                                animate={mobileMenuOpen ? {rotate: -45, y: -7.5, width: "24px"} : {
-                                    rotate: 0,
-                                    y: 0,
-                                    width: "12px"
-                                }}
-                                className={`h-px transition-colors duration-500 ${isDark || mobileMenuOpen ? 'bg-white' : 'bg-black'}`}
+                            <span
+                                className={`${barBase} origin-center ${mobileMenuOpen ? 'w-6 -rotate-45 -translate-y-[7.5px]' : 'w-3'}`}
                             />
                         </button>
                     </div>
                 </div>
             </div>
 
-            <AnimatePresence>
-                {mobileMenuOpen && (
-                    <motion.div
-                        initial={{clipPath: "circle(0% at calc(100% - 48px) 48px)"}}
-                        animate={{clipPath: "circle(150% at calc(100% - 48px) 48px)"}}
-                        exit={{clipPath: "circle(0% at calc(100% - 48px) 48px)"}}
-                        transition={{duration: 0.8, ease: [0.19, 1, 0.22, 1]}}
-                        className="fixed inset-0 z-105 bg-black flex flex-col justify-center px-8"
-                    >
-                        <nav className="flex flex-col gap-8 relative z-10">
-                            {navigation.map((item, i) => (
-                                <motion.div
-                                    key={item.name}
-                                    initial={{x: -20, opacity: 0}}
-                                    animate={{x: 0, opacity: 1}}
-                                    transition={{delay: 0.1 + i * 0.08}}
-                                >
-                                    <Link
-                                        href={item.href}
-                                        onClick={() => setMobileMenuOpen(false)}
-                                        className={`text-5xl font-bold uppercase tracking-tighter transition-all ${
-                                            pathname === item.href ? 'text-accent-500' : 'text-white/40 hover:text-white'
-                                        }`}
-                                    >
-                                        {item.name}
-                                    </Link>
-                                </motion.div>
-                            ))}
-                        </nav>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </motion.header>
+            <div
+                ref={menuRef}
+                style={{clipPath: CLIP(0), pointerEvents: "none"}}
+                className="fixed inset-0 z-105 bg-black flex flex-col justify-center px-8"
+            >
+                <nav className="flex flex-col gap-8 relative z-10">
+                    {navigation.map((item) => (
+                        <div key={item.name} className="menu-item">
+                            <Link
+                                href={item.href}
+                                onClick={() => setMobileMenuOpen(false)}
+                                className={`text-5xl font-bold uppercase tracking-tighter transition-all ${
+                                    pathname === item.href ? 'text-accent-500' : 'text-white/40 hover:text-white'
+                                }`}
+                            >
+                                {item.name}
+                            </Link>
+                        </div>
+                    ))}
+                </nav>
+            </div>
+        </header>
     );
 }

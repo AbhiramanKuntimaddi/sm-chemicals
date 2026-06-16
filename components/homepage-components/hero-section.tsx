@@ -1,9 +1,11 @@
 "use client";
 
 import React, {useState, useEffect, useRef} from "react";
-import {motion, AnimatePresence, useMotionValue, animate, useTransform, Variants} from "framer-motion";
+import {useGSAP} from "@gsap/react";
+import {gsap} from "@/lib/gsap";
 import {ArrowUpRight, FlaskConical} from "lucide-react";
 import Link from "next/link";
+import {useReveal} from "@/hooks/use-reveal";
 
 const sectors = ["Water Treatment", "Construction", "Pharmaceuticals", "Textiles", "Power Plants"];
 
@@ -15,32 +17,19 @@ const stats = [
     {label: "Purity", value: 99.99, suffix: "%", decimals: 2},
 ];
 
-const containerVariants: Variants = {
-    initial: {opacity: 0},
-    animate: {
-        opacity: 1,
-        transition: {staggerChildren: 0.15, delayChildren: 0.1},
-    },
-};
-
-const itemVariants: Variants = {
-    initial: {opacity: 0, y: 30, filter: "blur(8px)"},
-    animate: {
-        opacity: 1,
-        y: 0,
-        filter: "blur(0px)",
-        transition: {duration: 1, ease: [0.19, 1, 0.22, 1]},
-    },
-};
-
 const Counter = ({value, decimals = 0, delay = 0}: { value: number; decimals?: number; delay?: number }) => {
-    const count = useMotionValue(0);
-    const rounded = useTransform(count, (v) => v.toFixed(decimals));
-    useEffect(() => {
-        const t = setTimeout(() => animate(count, value, {duration: 3.5, ease: [0.19, 1, 0.22, 1]}), delay * 1000);
-        return () => clearTimeout(t);
-    }, [value, count, delay]);
-    return <motion.span>{rounded}</motion.span>;
+    const [display, setDisplay] = useState((0).toFixed(decimals));
+    useGSAP(() => {
+        const obj = {v: 0};
+        gsap.to(obj, {
+            v: value,
+            duration: 3.5,
+            delay,
+            ease: "expo",
+            onUpdate: () => setDisplay(obj.v.toFixed(decimals)),
+        });
+    }, []);
+    return <span>{display}</span>;
 };
 
 const MolecularBackground = ({mousePosition}: { mousePosition: React.MutableRefObject<{ x: number, y: number }> }) => {
@@ -184,10 +173,21 @@ export default function HeroSection() {
     const sectionRef = useRef<HTMLElement>(null);
     const mousePosition = useRef({x: -1000, y: -1000});
 
+    const contentRef = useReveal<HTMLDivElement>();
+    const sectorRef = useRef<HTMLDivElement>(null);
+
     useEffect(() => {
         const t = setInterval(() => setIndex((i) => (i + 1) % sectors.length), 4500);
         return () => clearInterval(t);
     }, []);
+
+    useGSAP(() => {
+        gsap.fromTo(
+            sectorRef.current,
+            {y: 20, autoAlpha: 0, filter: "blur(10px)"},
+            {y: 0, autoAlpha: 1, filter: "blur(0px)", duration: 0.8, ease: "expo"},
+        );
+    }, {dependencies: [index]});
 
     const handleInteraction = (e: any) => {
         if (!sectionRef.current) return;
@@ -207,66 +207,57 @@ export default function HeroSection() {
         >
             <MolecularBackground mousePosition={mousePosition}/>
 
-            <motion.div
-                variants={containerVariants}
-                initial="initial"
-                animate="animate"
+            <div
+                ref={contentRef}
                 className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 sm:px-10 lg:px-16 max-w-7xl mx-auto w-full py-24 md:py-40"
             >
-                <motion.div variants={itemVariants} className="flex items-center gap-4 md:gap-6 mb-10 md:mb-16">
+                <div data-reveal className="flex items-center gap-4 md:gap-6 mb-10 md:mb-16">
                     <div className="h-px w-6 md:w-12 bg-accent-500/40"/>
                     <span
                         className="text-[9px] md:text-[10px] uppercase tracking-[0.6em] md:tracking-[1em] font-black text-text-400 text-center whitespace-nowrap">
                         Est. 2008 · Chemical Engineering
                     </span>
                     <div className="h-px w-6 md:w-12 bg-accent-500/40"/>
-                </motion.div>
+                </div>
 
-                <motion.h1
-                    variants={itemVariants}
+                <h1
+                    data-reveal
                     className="text-5xl sm:text-7xl md:text-[9rem] lg:text-[11rem] font-bold tracking-[-0.04em] leading-[0.9] md:leading-[0.75] text-text-950 mb-10 md:mb-16 text-center"
                 >
                     SM <span className="text-text-400 italic font-light">Chemicals</span>
-                </motion.h1>
+                </h1>
 
-                <motion.div variants={itemVariants} className="flex flex-col items-center w-full mb-12 md:mb-20">
+                <div data-reveal className="flex flex-col items-center w-full mb-12 md:mb-20">
                     <span
                         className="text-[9px] md:text-[10px] uppercase tracking-[0.4em] md:tracking-[0.6em] text-text-400 font-bold mb-4 md:mb-6">
                         Engineering Chemicals for
                     </span>
                     <div className="relative h-14 md:h-24 w-full flex justify-center items-center">
-                        <AnimatePresence mode="wait">
-                            <motion.div
-                                key={index}
-                                initial={{y: 20, opacity: 0, filter: "blur(10px)"}}
-                                animate={{y: 0, opacity: 1, filter: "blur(0px)"}}
-                                exit={{y: -20, opacity: 0, filter: "blur(10px)"}}
-                                transition={{duration: 0.8, ease: [0.19, 1, 0.22, 1]}}
-                                className="absolute text-2xl sm:text-4xl md:text-7xl font-light italic text-accent-500 tracking-tight text-center"
-                            >
-                                {sectors[index].toUpperCase()}
-                            </motion.div>
-                        </AnimatePresence>
+                        <div
+                            ref={sectorRef}
+                            className="absolute text-2xl sm:text-4xl md:text-7xl font-light italic text-accent-500 tracking-tight text-center"
+                        >
+                            {sectors[index].toUpperCase()}
+                        </div>
                     </div>
-                </motion.div>
+                </div>
 
-                <motion.p
-                    variants={itemVariants}
+                <p
+                    data-reveal
                     className="max-w-xs sm:max-w-md md:max-w-2xl text-center text-text-400 text-xs sm:text-sm md:text-lg font-light tracking-wide leading-relaxed mb-12 md:mb-20"
                 >
                     Crafting <span
                     className="text-accent-500 font-normal">high-precision industrial formulations</span> that drive
                     innovation across India&apos;s infrastructure.
-                </motion.p>
+                </p>
 
-                <motion.div variants={itemVariants}
-                            className="flex flex-col sm:flex-row gap-4 md:gap-8 items-center w-full sm:w-auto px-4 sm:px-0">
+                <div data-reveal
+                     className="flex flex-col sm:flex-row gap-4 md:gap-8 items-center w-full sm:w-auto px-4 sm:px-0">
                     <Link
                         href="/products"
                         className="group relative h-14 md:h-16 w-full sm:w-64 flex items-center justify-center bg-accent-500 rounded-sm overflow-hidden transition-colors"
                     >
-                        <motion.div className="absolute inset-0 bg-white opacity-0" whileHover={{opacity: 1}}
-                                    transition={{duration: 0.4}}/>
+                        <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-100 transition-opacity duration-400"/>
                         <span
                             className="relative z-10 text-[10px] md:text-[11px] font-black uppercase tracking-[0.3em] text-black">Explore Products</span>
                         <FlaskConical className="relative z-10 ml-3 w-4 h-4 text-black"/>
@@ -281,10 +272,10 @@ export default function HeroSection() {
                         <ArrowUpRight
                             className="ml-3 w-4 h-4 text-text-400 group-hover:text-accent-500 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all"/>
                     </Link>
-                </motion.div>
+                </div>
 
-                <motion.div
-                    variants={itemVariants}
+                <div
+                    data-reveal
                     className="grid grid-cols-2 md:grid-cols-5 gap-y-12 gap-x-6 md:gap-12 mt-24 md:mt-40 w-full border-t border-background-200 pt-12 md:pt-20"
                 >
                     {stats.map((s, i) => (
@@ -303,8 +294,8 @@ export default function HeroSection() {
                             </p>
                         </div>
                     ))}
-                </motion.div>
-            </motion.div>
+                </div>
+            </div>
         </section>
     );
 }

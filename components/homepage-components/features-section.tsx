@@ -1,8 +1,8 @@
 "use client";
 
-import React, {useRef} from "react";
+import React from "react";
 import {Shield, Microscope, Truck, Zap} from "lucide-react";
-import {motion, useInView} from "framer-motion";
+import {useReveal} from "@/hooks/use-reveal";
 
 const features = [
     {
@@ -32,14 +32,12 @@ const features = [
 ];
 
 export function FeaturesSection() {
-    const ref = useRef(null);
-    const isInView = useInView(ref, {once: true, margin: "-10% 0px"});
+    const scope = useReveal<HTMLDivElement>({scroll: true, y: 0, blur: 0, stagger: 0.1, duration: 0.5, start: "top 90%"});
 
     return (
         <section className="py-24 bg-background-950 text-white selection:bg-[#8cff00] selection:text-black">
             <div className="mx-auto max-w-7xl px-6">
 
-                {/* ── Header: Aligned and Re-written ── */}
                 <div className="flex flex-col lg:flex-row items-end justify-between gap-8 mb-6">
                     <div className="flex flex-col">
                         <div className="flex items-center gap-3 mb-6">
@@ -53,7 +51,6 @@ export function FeaturesSection() {
                         </h2>
                     </div>
 
-                    {/* Aligned to bottom of text-baseline and updated copy */}
                     <div className="max-w-[320px] lg:text-right pb-2">
                         <p className="text-[10px] font-bold uppercase tracking-[0.2em] leading-relaxed text-white/40">
                             Advanced molecular consistency delivering measurable industrial advantage.
@@ -61,18 +58,14 @@ export function FeaturesSection() {
                     </div>
                 </div>
 
-                {/* Divider Line */}
                 <div className="h-px w-full bg-white/10 mb-16"/>
 
-                {/* Grid */}
-                <div ref={ref}
+                <div ref={scope}
                      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-white/10 border border-white/10">
-                    {features.map((feat, i) => (
-                        <motion.div
+                    {features.map((feat) => (
+                        <div
                             key={feat.name}
-                            initial={{opacity: 0}}
-                            animate={isInView ? {opacity: 1} : {}}
-                            transition={{delay: i * 0.1, duration: 0.5}}
+                            data-reveal
                             className="group bg-background-950 p-8 h-80 flex flex-col justify-between transition-colors hover:bg-white/2"
                         >
                             <div className="flex justify-between items-start">
@@ -97,7 +90,7 @@ export function FeaturesSection() {
                                     {feat.description}
                                 </p>
                             </div>
-                        </motion.div>
+                        </div>
                     ))}
                 </div>
             </div>

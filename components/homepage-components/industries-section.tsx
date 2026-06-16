@@ -1,54 +1,33 @@
 "use client";
 
-import React, {useRef} from "react";
+import React from "react";
 import {
-    Droplets, Factory, Building2, Shirt, Pill,
-    Paintbrush, Milk, Zap, Waves, Fuel, ArrowUpRight,
-    LucideIcon
+    Fish, Building2, Wind, Recycle, WashingMachine, Atom,
+    Newspaper, Zap, Filter, Shirt, Flame, Car, FlaskConical,
+    ArrowUpRight, type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
-import {motion, useInView, Variants} from "framer-motion";
+import {useReveal} from "@/hooks/use-reveal";
+import {productCategories} from "@/data/products";
 
-interface Industry {
-    name: string;
-    icon: LucideIcon;
-    desc: string;
-}
-
-const industries: Industry[] = [
-    {name: "Water Treatment", icon: Droplets, desc: "Purification & Dosing"},
-    {name: "ETP / STP Plants", icon: Factory, desc: "Effluent Systems"},
-    {name: "Construction", icon: Building2, desc: "Admixtures & Prep"},
-    {name: "Textiles", icon: Shirt, desc: "Dyes & Finishing"},
-    {name: "Pharmaceuticals", icon: Pill, desc: "API Intermediates"},
-    {name: "Paints & Coatings", icon: Paintbrush, desc: "Resins & Additives"},
-    {name: "Food & Beverage", icon: Milk, desc: "Process Chemicals"},
-    {name: "Power Plants", icon: Zap, desc: "Cooling Treatment"},
-    {name: "Swimming Pools", icon: Waves, desc: "Water Sanitation"},
-    {name: "Oil & Gas", icon: Fuel, desc: "Refining Agents"},
-];
-
-const containerVariants: Variants = {
-    hidden: {opacity: 0},
-    visible: {
-        opacity: 1,
-        transition: {staggerChildren: 0.05, delayChildren: 0.2},
-    },
-};
-
-const itemVariants: Variants = {
-    hidden: {opacity: 0, y: 20, filter: "blur(4px)"},
-    visible: {
-        opacity: 1,
-        y: 0,
-        filter: "blur(0px)",
-        transition: {duration: 0.8, ease: [0.19, 1, 0.22, 1]}
-    },
+const META: Record<string, { icon: LucideIcon; tagline: string }> = {
+    aquaculture: {icon: Fish, tagline: "Shrimp & Fish Farming"},
+    construction: {icon: Building2, tagline: "Concrete Admixtures"},
+    cooling: {icon: Wind, tagline: "Cooling Water Circuits"},
+    etp: {icon: Recycle, tagline: "Effluent & Sewage"},
+    laundry: {icon: WashingMachine, tagline: "Industrial Laundry"},
+    polymer: {icon: Atom, tagline: "Coagulants & Dispersants"},
+    "pulp-paper": {icon: Newspaper, tagline: "Paper Manufacturing"},
+    "power-plant": {icon: Zap, tagline: "Power Generation"},
+    ro: {icon: Filter, tagline: "Reverse Osmosis"},
+    textile: {icon: Shirt, tagline: "Textile Processing"},
+    "water-boiler": {icon: Flame, tagline: "Boiler Water Treatment"},
+    automobile: {icon: Car, tagline: "Automotive Care"},
+    other: {icon: FlaskConical, tagline: "Specialty Chemicals"},
 };
 
 export function IndustriesSection() {
-    const ref = useRef<HTMLDivElement>(null);
-    const isInView = useInView(ref, {once: true, amount: 0.1});
+    const scope = useReveal<HTMLDivElement>({scroll: true, y: 20, blur: 4, stagger: 0.05, duration: 0.8, start: "top 90%"});
 
     return (
         <section id="industries" className="py-32 bg-background-50 text-text-950 overflow-hidden">
@@ -72,61 +51,62 @@ export function IndustriesSection() {
                     </div>
                     <div className="md:text-right mt-8 md:mt-0">
                         <p className="text-[11px] text-text-500 max-w-xs leading-relaxed uppercase tracking-[0.2em] font-bold">
-                            High-precision chemical formulations engineered for India&apos;s critical infrastructure.
+                            {productCategories.length} product categories engineered for India&apos;s critical infrastructure.
                         </p>
                     </div>
                 </div>
 
-                <motion.div
-                    ref={ref}
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate={isInView ? "visible" : "hidden"}
-                    className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-px bg-background-200 border border-background-200"
+                <div
+                    ref={scope}
+                    className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 border-l border-t border-background-200"
                 >
-                    {industries.map((ind: Industry) => (
-                        <motion.div
-                            key={ind.name}
-                            variants={itemVariants}
-                            className="bg-background-50 group"
-                        >
-                            <Link
-                                href="/products"
-                                className="relative flex flex-col h-72 p-8 transition-all duration-500 overflow-hidden"
-                            >
-                                <div
-                                    className="absolute inset-0 bg-background-500 translate-y-[101%] group-hover:translate-y-0 transition-transform duration-500 ease-[0.19,1,0.22,1] z-0"/>
+                    {productCategories.map((cat) => {
+                        const meta = META[cat.id] ?? {icon: FlaskConical, tagline: "Specialty Chemicals"};
+                        const Icon = meta.icon;
+                        return (
+                            <div key={cat.id} data-reveal className="bg-background-50 group border-r border-b border-background-200">
+                                <Link
+                                    href="/products"
+                                    onClick={() => sessionStorage.setItem("smc:scrollCategory", cat.id)}
+                                    className="relative flex flex-col h-72 p-8 transition-all duration-500 overflow-hidden"
+                                >
+                                    <div
+                                        className="absolute inset-0 bg-background-500 translate-y-[101%] group-hover:translate-y-0 transition-transform duration-500 ease-[0.19,1,0.22,1] z-0"/>
 
-                                <div
-                                    className="absolute top-0 left-0 w-full h-px bg-background-500 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out z-20"/>
+                                    <div
+                                        className="absolute top-0 left-0 w-full h-px bg-background-500 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out z-20"/>
 
-                                <div className="flex flex-col h-full relative z-10">
-                                    <div className="mb-8">
-                                        <ind.icon
-                                            strokeWidth={1}
-                                            className="h-10 w-10 text-text-400 group-hover:text-black transition-all duration-500"
-                                        />
+                                    <div className="flex flex-col h-full relative z-10">
+                                        <div className="mb-8">
+                                            <Icon
+                                                strokeWidth={1}
+                                                className="h-10 w-10 text-text-400 group-hover:text-black transition-all duration-500"
+                                            />
+                                        </div>
+
+                                        <div className="mt-auto">
+                                            <span className="text-[10px] font-bold uppercase tracking-widest text-text-300 group-hover:text-black/60 transition-colors duration-500 block mb-2">
+                                                {String(cat.products.length).padStart(2, "0")} Products
+                                            </span>
+                                            <h3 className="text-[14px] font-black uppercase tracking-[0.2em] text-text-950 group-hover:text-black mb-2 transition-colors duration-500 leading-tight">
+                                                {cat.name}
+                                            </h3>
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-text-400 group-hover:text-black/70 leading-tight transition-colors duration-500">
+                                                {meta.tagline}
+                                            </p>
+                                        </div>
+
+                                        <div className="absolute top-0 right-0">
+                                            <ArrowUpRight
+                                                className="h-5 w-5 text-text-300 group-hover:text-black transition-all duration-500 p-1"
+                                            />
+                                        </div>
                                     </div>
-
-                                    <div className="mt-auto">
-                                        <h3 className="text-[14px] font-black uppercase tracking-[0.2em] text-text-950 group-hover:text-black mb-2 transition-colors duration-500">
-                                            {ind.name}
-                                        </h3>
-                                        <p className="text-[10px] font-bold uppercase tracking-widest text-text-400 group-hover:text-black/70 leading-tight transition-colors duration-500">
-                                            {ind.desc}
-                                        </p>
-                                    </div>
-
-                                    <div className="absolute top-0 right-0">
-                                        <ArrowUpRight
-                                            className="h-5 w-5 text-text-300 group-hover:text-black transition-all duration-500 p-1"
-                                        />
-                                    </div>
-                                </div>
-                            </Link>
-                        </motion.div>
-                    ))}
-                </motion.div>
+                                </Link>
+                            </div>
+                        );
+                    })}
+                </div>
 
                 <div className="mt-24 flex flex-col items-center gap-6">
                     <Link
