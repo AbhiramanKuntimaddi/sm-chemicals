@@ -13,4 +13,5 @@ node_modules/
 .env.example
 
 # Supabase (migrations + setup, managed outside the repo)
-supabase/
+supabase/migrations/
+supabase/README.md
