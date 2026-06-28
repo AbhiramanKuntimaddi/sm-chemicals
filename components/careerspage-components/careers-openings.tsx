@@ -3,12 +3,10 @@
 import React, { useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { useSection } from "@/hooks/use-section";
-import type { CareersContent } from "@/data/careers";
+import { careersIntro, openings } from "@/data/careers";
 import { CareerApplyModal } from "./career-apply-modal";
-import { CtaSubmit } from "@/components/ui/cta-button";
 
-export function CareersOpenings({ content }: { content: CareersContent }) {
-	const { intro: careersIntro, openings } = content;
+export function CareersOpenings() {
 	const [applyRole, setApplyRole] = useState<string | null>(null);
 	const [modalOpen, setModalOpen] = useState(false);
 
@@ -34,7 +32,7 @@ export function CareersOpenings({ content }: { content: CareersContent }) {
 				<div ref={introScope} className="mb-20 lg:mb-28">
 					<div data-reveal className="flex items-center gap-3 mb-6">
 						<div className="h-px w-8 bg-accent-700" />
-						<span className="text-[11px] font-black text-accent-700 uppercase tracking-[0.5em]">
+						<span className="text-[10px] font-black text-accent-700 uppercase tracking-[0.5em]">
 							{careersIntro.eyebrow}
 						</span>
 					</div>
@@ -49,7 +47,7 @@ export function CareersOpenings({ content }: { content: CareersContent }) {
 					</h2>
 					<p
 						data-reveal
-						className="max-w-2xl text-text-800 text-lg md:text-xl font-light leading-relaxed mb-16"
+						className="max-w-2xl text-text-400 text-lg md:text-xl font-light leading-relaxed mb-16"
 					>
 						{careersIntro.body}
 					</p>
@@ -61,10 +59,10 @@ export function CareersOpenings({ content }: { content: CareersContent }) {
 								data-reveal
 								className="bg-background-50 p-8 lg:p-10"
 							>
-								<h3 className="text-[12px] font-black uppercase tracking-[0.2em] text-text-950 mb-3">
+								<h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-text-950 mb-3">
 									{v.title}
 								</h3>
-								<p className="text-text-800 text-lg font-light leading-relaxed">
+								<p className="text-text-400 text-lg font-light leading-relaxed">
 									{v.detail}
 								</p>
 							</div>
@@ -76,7 +74,7 @@ export function CareersOpenings({ content }: { content: CareersContent }) {
 					<h2 className="text-3xl md:text-5xl font-bold tracking-tighter text-text-950">
 						Open <span className="text-text-400 font-light italic">positions.</span>
 					</h2>
-					<span className="text-[11px] font-black uppercase tracking-[0.3em] text-accent-700 tabular-nums">
+					<span className="text-[10px] font-black uppercase tracking-[0.3em] text-text-400 tabular-nums">
 						{String(openings.length).padStart(2, "0")} Roles
 					</span>
 				</div>
@@ -95,16 +93,16 @@ export function CareersOpenings({ content }: { content: CareersContent }) {
 									<h3 className="text-xl lg:text-2xl font-bold tracking-tight text-text-950 mb-3">
 										{role.title}
 									</h3>
-									<div className="flex flex-wrap gap-x-5 gap-y-1 text-[11px] font-black uppercase tracking-[0.2em] text-accent-700 mb-4">
+									<div className="flex flex-wrap gap-x-5 gap-y-1 text-[10px] font-black uppercase tracking-[0.2em] text-text-400 mb-4">
 										<span>{role.department}</span>
 										<span className="text-accent-700">{role.type}</span>
 										<span>{role.location}</span>
 									</div>
-									<p className="max-w-xl text-text-800 text-lg font-light leading-relaxed">
+									<p className="max-w-xl text-text-400 text-lg font-light leading-relaxed">
 										{role.description}
 									</p>
 								</div>
-								<div className="flex items-center gap-2 shrink-0 text-[11px] font-black uppercase tracking-[0.3em] text-text-950 group-hover:text-accent-700 transition-colors">
+								<div className="flex items-center gap-2 shrink-0 text-[10px] font-black uppercase tracking-[0.3em] text-text-950 group-hover:text-accent-700 transition-colors">
 									Apply
 									<ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
 								</div>
@@ -112,21 +110,25 @@ export function CareersOpenings({ content }: { content: CareersContent }) {
 						))}
 					</div>
 				) : (
-					<p className="text-text-800 text-lg font-light">
+					<p className="text-text-400 text-lg font-light">
 						No open roles right now.
 					</p>
 				)}
 
 				{/* General application */}
 				<div className="mt-16 flex flex-col items-start gap-4 border-t border-background-200 pt-12 sm:flex-row sm:items-center sm:justify-between">
-					<p className="text-text-800 text-lg font-light max-w-md">
+					<p className="text-text-400 text-sm font-light max-w-md">
 						Don&apos;t see the right role? We still want to hear from strong
 						people.
 					</p>
-					<CtaSubmit type="button" onClick={() => openApply(null)}>
+					<button
+						type="button"
+						onClick={() => openApply(null)}
+						className="group inline-flex items-center justify-center gap-3 bg-text-950 text-background-50 px-10 py-5 text-[10px] font-black uppercase tracking-[0.4em] hover:bg-accent-700 hover:text-text-950 transition-all cursor-pointer"
+					>
 						Send a general application
 						<ArrowUpRight className="w-4 h-4" />
-					</CtaSubmit>
+					</button>
 				</div>
 			</div>
 
