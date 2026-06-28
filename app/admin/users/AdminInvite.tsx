@@ -1,0 +1,81 @@
+"use client";
+
+import { useActionState } from "react";
+import { createUser, type CreateUserState } from "./actions";
+
+const initial: CreateUserState = {};
+
+const inputCls =
+	"w-full border-b border-white/15 bg-transparent py-3 text-white font-light outline-none transition-colors placeholder:text-white/20 focus:border-accent-500";
+const labelCls =
+	"uppercase tracking-[0.3em] text-white/40 text-[0.6rem] font-black";
+
+export function AdminInvite() {
+	const [state, action, pending] = useActionState(createUser, initial);
+
+	return (
+		<form action={action} className="flex flex-col gap-6">
+			<div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+				<label className="flex flex-col gap-2">
+					<span className={labelCls}>Full name</span>
+					<input
+						type="text"
+						name="full_name"
+						placeholder="First Last"
+						className={inputCls}
+					/>
+				</label>
+				<label className="flex flex-col gap-2">
+					<span className={labelCls}>Email</span>
+					<input
+						type="email"
+						name="email"
+						required
+						placeholder="person@smchemicals.co.in"
+						className={inputCls}
+					/>
+				</label>
+				<label className="flex flex-col gap-2">
+					<span className={labelCls}>Role</span>
+					<select
+						name="role"
+						defaultValue="editor"
+						className={`${inputCls} cursor-pointer`}
+					>
+						<option value="editor" className="bg-[#0a0d09]">
+							Editor
+						</option>
+						<option value="admin" className="bg-[#0a0d09]">
+							Admin
+						</option>
+					</select>
+				</label>
+				<label className="flex flex-col gap-2">
+					<span className={labelCls}>Temporary password</span>
+					<input
+						type="text"
+						name="password"
+						required
+						minLength={8}
+						placeholder="At least 8 characters"
+						className={inputCls}
+					/>
+				</label>
+			</div>
+
+			<button
+				type="submit"
+				disabled={pending}
+				className="group mt-2 inline-flex w-fit cursor-pointer items-center gap-3 bg-accent-500 px-8 py-4 uppercase tracking-[0.3em] text-black text-[0.7rem] font-black transition-colors hover:bg-white disabled:opacity-50"
+			>
+				{pending ? "Creating…" : "Create user"}
+				<span className="transition-transform duration-500 group-hover:translate-x-1">
+					&rarr;
+				</span>
+			</button>
+
+			{state.error && <p className="text-sm text-red-400">{state.error}</p>}
+			{state.ok && <p className="text-sm text-accent-500">{state.ok}</p>}
+		</form>
+	);
+}

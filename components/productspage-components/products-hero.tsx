@@ -14,7 +14,7 @@ export default function ProductsHeader() {
 			<div ref={scope} className="relative z-10 max-w-7xl mx-auto px-6 lg:px-10">
 				<div data-reveal className="flex items-center gap-3 mb-5">
 					<div className="h-px w-6 bg-accent-500/60" />
-					<span className="text-[10px] font-black text-text-400 uppercase tracking-[0.5em]">
+					<span className="text-[11px] font-black text-text-400 uppercase tracking-[0.5em]">
 						Product Index
 					</span>
 				</div>
@@ -23,7 +23,7 @@ export default function ProductsHeader() {
 					Chemical <span className="text-text-400 italic font-light">Portfolio.</span>
 				</h1>
 
-				<p data-reveal className="mt-5 max-w-2xl text-text-400 text-sm md:text-base font-light tracking-wide leading-relaxed">
+				<p data-reveal className="mt-5 max-w-2xl text-text-400 text-base md:text-lg font-light tracking-wide leading-relaxed">
 					High-purity industrial compounds — <span className="text-accent-500 font-normal">engineered for consistency</span>, verified for scale.
 				</p>
 			</div>

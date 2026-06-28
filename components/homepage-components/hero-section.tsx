@@ -6,22 +6,7 @@ import { gsap } from "@/lib/gsap";
 import { ArrowUpRight, FlaskConical } from "lucide-react";
 import Link from "next/link";
 import { useReveal } from "@/hooks/use-reveal";
-
-const sectors = [
-  "Water Treatment",
-  "Construction",
-  "Pharmaceuticals",
-  "Textiles",
-  "Power Plants",
-];
-
-const stats = [
-  { label: "Experience", value: 15, suffix: "Yrs" },
-  { label: "Sectors", value: 20, suffix: "+" },
-  { label: "Portfolio", value: 100, suffix: "+" },
-  { label: "Global", value: 500, suffix: "+" },
-  { label: "Purity", value: 99.99, suffix: "%", decimals: 2 },
-];
+import type { HomeContent } from "@/data/content";
 
 const Counter = ({
   value,
@@ -59,7 +44,9 @@ const MolecularBackground = ({
     const ctx = canvas.getContext("2d", { alpha: true });
     if (!ctx) return;
 
-    const accentColor = "#8cff00";
+    const accentColor = getComputedStyle(document.documentElement)
+      .getPropertyValue("--color-accent-500")
+      .trim();
     let particles: Particle[] = [];
     let frame: number;
     let time = 0;
@@ -196,12 +183,19 @@ const MolecularBackground = ({
   );
 };
 
-export default function HeroSection() {
+export default function HeroSection({ sectors, stats, tagline }: HomeContent) {
   const [index, setIndex] = useState(0);
   const sectionRef = useRef<HTMLElement>(null);
   const mousePosition = useRef({ x: -1000, y: -1000 });
 
   const contentRef = useReveal<HTMLDivElement>();
+  const statsScope = useReveal<HTMLDivElement>({
+    y: 24,
+    blur: 0,
+    stagger: 0.12,
+    delay: 1.1,
+    duration: 0.7,
+  });
   const sectorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -229,6 +223,36 @@ export default function HeroSection() {
     { dependencies: [index] },
   );
 
+  // Scrub parallax exit: content fades + drifts up faster, the stats bar drifts
+  // slower for depth, as the hero scrolls away.
+  useGSAP(
+    () => {
+      if (!sectionRef.current) return;
+      gsap.to(contentRef.current, {
+        yPercent: -12,
+        autoAlpha: 0,
+        ease: "none",
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: "top top",
+          end: "bottom top",
+          scrub: true,
+        },
+      });
+      gsap.to(statsScope.current, {
+        yPercent: -6,
+        ease: "none",
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: "top top",
+          end: "bottom top",
+          scrub: true,
+        },
+      });
+    },
+    { scope: sectionRef },
+  );
+
   const handleInteraction = (e: any) => {
     if (!sectionRef.current) return;
     const rect = sectionRef.current.getBoundingClientRect();
@@ -249,17 +273,17 @@ export default function HeroSection() {
 
       <div
         ref={contentRef}
-        className="relative z-10 max-w-7xl mx-auto w-full px-6 sm:px-10 lg:px-16 pt-24 pb-12 flex-1 flex flex-col items-center justify-center"
+        className="relative z-10 max-w-7xl mx-auto w-full px-6 sm:px-10 pt-24 pb-12 flex-1 flex flex-col items-center justify-center"
       >
         <div
           data-reveal
           className="flex items-center gap-4 md:gap-6 mb-8 md:mb-12"
         >
-          <div className="h-px w-6 md:w-12 bg-accent-500/40" />
-          <span className="text-[9px] md:text-[10px] uppercase tracking-[0.6em] md:tracking-[1em] font-black text-text-400 text-center whitespace-nowrap">
+          <div className="h-px w-5 md:w-12 bg-accent-500/40 shrink-0" />
+          <span className="text-[11px] sm:text-sm md:text-base uppercase tracking-[0.2em] sm:tracking-[0.4em] md:tracking-[0.7em] font-black text-text-400 text-center whitespace-nowrap">
             Est. 2008 · Chemical Engineering
           </span>
-          <div className="h-px w-6 md:w-12 bg-accent-500/40" />
+          <div className="h-px w-5 md:w-12 bg-accent-500/40 shrink-0" />
         </div>
 
         <h1
@@ -273,7 +297,7 @@ export default function HeroSection() {
           data-reveal
           className="flex flex-col items-center w-full mb-8 md:mb-12"
         >
-          <span className="text-[9px] md:text-[10px] uppercase tracking-[0.4em] md:tracking-[0.6em] text-text-400 font-bold mb-3">
+          <span className="text-[11px] md:text-[11px] uppercase tracking-[0.4em] md:tracking-[0.6em] text-text-400 font-bold mb-3">
             Engineering Chemicals for
           </span>
           <div className="relative h-10 md:h-16 w-full flex justify-center items-center">
@@ -288,13 +312,9 @@ export default function HeroSection() {
 
         <p
           data-reveal
-          className="max-w-xs sm:max-w-md md:max-w-2xl text-center text-text-400 text-xs sm:text-sm md:text-base font-light tracking-wide leading-relaxed mb-10 md:mb-12"
+          className="max-w-xs sm:max-w-md md:max-w-2xl text-center text-text-400 text-base sm:text-lg md:text-xl font-light tracking-wide leading-relaxed mb-10 md:mb-12"
         >
-          Crafting{" "}
-          <span className="text-accent-500 font-normal">
-            high-precision industrial formulations
-          </span>{" "}
-          that drive innovation across India&apos;s infrastructure.
+          {tagline}
         </p>
 
         <div
@@ -306,7 +326,7 @@ export default function HeroSection() {
             className="group relative h-14 w-full sm:w-56 flex items-center justify-center bg-accent-500 rounded-sm overflow-hidden transition-colors"
           >
             <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-100 transition-opacity duration-400" />
-            <span className="relative z-10 text-[10px] font-black uppercase tracking-[0.3em] text-black">
+            <span className="relative z-10 text-[11px] font-black uppercase tracking-[0.3em] text-black">
               Explore Products
             </span>
             <FlaskConical className="relative z-10 ml-3 w-4 h-4 text-black" />
@@ -316,7 +336,7 @@ export default function HeroSection() {
             href="/about#milestones"
             className="group relative h-14 w-full sm:w-56 flex items-center justify-center border border-text-300 hover:border-accent-500 rounded-sm transition-all duration-500"
           >
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-text-400 group-hover:text-accent-500">
+            <span className="text-[11px] font-black uppercase tracking-[0.3em] text-text-400 group-hover:text-accent-500">
               View Portfolio
             </span>
             <ArrowUpRight className="ml-3 w-4 h-4 text-text-400 group-hover:text-accent-500 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
@@ -326,27 +346,28 @@ export default function HeroSection() {
 
       <div className="relative z-10 w-full border-t border-background-200/60 bg-background-50/50 backdrop-blur-sm">
         <div
-          data-reveal
-          className="max-w-7xl mx-auto w-full px-6 sm:px-10 lg:px-16 py-8 md:py-12 grid grid-cols-2 md:grid-cols-5 gap-y-8 gap-x-6"
+          ref={statsScope}
+          className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-8 md:py-12 grid grid-cols-2 md:grid-cols-5 gap-y-8 gap-x-6"
         >
           {stats.map((s, i) => (
             <div
               key={i}
+              data-reveal
               className="flex flex-col items-center md:items-start group cursor-default"
             >
               <div className="flex items-baseline mb-1">
-                <span className="text-3xl md:text-5xl font-extralight tracking-tighter text-text-950">
+                <span className="text-2xl sm:text-4xl md:text-5xl font-extralight tracking-tighter text-text-950">
                   <Counter
                     value={s.value}
                     decimals={s.decimals}
-                    delay={1.0 + i * 0.1}
+                    delay={1.1 + i * 0.12}
                   />
                 </span>
-                <span className="text-lg md:text-2xl text-accent-500 ml-0.5 font-bold tracking-normal">
+                <span className="text-base sm:text-lg md:text-2xl text-accent-500 ml-0.5 font-bold tracking-normal">
                   {s.suffix}
                 </span>
               </div>
-              <p className="text-[9px] font-black uppercase tracking-[0.3em] text-text-400 group-hover:text-accent-500 transition-colors duration-500">
+              <p className="text-[11px] font-black uppercase tracking-[0.3em] text-text-400 group-hover:text-accent-500 transition-colors duration-500">
                 {s.label}
               </p>
             </div>

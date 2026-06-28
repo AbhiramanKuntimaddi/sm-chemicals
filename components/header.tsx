@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { useGSAP } from "@gsap/react";
@@ -10,6 +11,8 @@ const navigation = [
   { name: "Home", href: "/" },
   { name: "Products", href: "/products" },
   { name: "About", href: "/about" },
+  { name: "Blog", href: "/blog" },
+  { name: "Careers", href: "/careers" },
   { name: "Contact", href: "/contact" },
 ];
 
@@ -83,20 +86,24 @@ export function Header() {
 
   return (
     <>
-      <header ref={headerRef} className="fixed top-0 w-full !z-[999]">
+      <header ref={headerRef} className="fixed top-0 w-full z-[999]">
         <div
           className={`absolute inset-0 transition-all duration-300 ${scrolled ? "bg-black/20 backdrop-blur-md" : "bg-transparent"}`}
         />
 
-        <div className="relative mx-auto max-w-7xl px-6 h-20 flex items-center justify-between">
-          <Link
-            href="/"
-            className="text-white text-[14px] font-bold tracking-[0.3em] uppercase"
-          >
-            SM Chemicals
+        <div className="relative mx-auto max-w-7xl px-6 sm:px-10 h-20 flex items-center justify-between">
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/logo-header.png"
+              alt="SM Chemicals"
+              width={2260}
+              height={320}
+              className="h-6 sm:h-7 w-auto brightness-0 invert"
+              priority
+            />
           </Link>
 
-          <nav className="hidden lg:flex gap-12">
+          <nav className="hidden lg:flex absolute left-1/2 -translate-x-1/2 gap-9 items-center">
             {navigation.map((item) => (
               <Link
                 key={item.name}
@@ -104,37 +111,40 @@ export function Header() {
                 className="relative group py-2"
               >
                 <span
-                  className={`text-[10px] font-bold uppercase tracking-[0.3em] transition-colors ${isActive(item.href) ? "text-accent-500" : "text-white/70 group-hover:text-white"}`}
+                  className={`text-[11px] font-bold uppercase tracking-[0.25em] transition-colors ${isActive(item.href) ? "text-accent-500" : "text-white/70 group-hover:text-white"}`}
                 >
                   {item.name}
                 </span>
                 <span
-                  className={`absolute bottom-0 left-0 h-px bg-accent-500 transition-all duration-300 ${isActive(item.href) ? "w-full" : "w-0 group-hover:w-full"}`}
+                  className={`absolute -bottom-0.5 left-0 h-px bg-accent-500 transition-all duration-300 ${isActive(item.href) ? "w-full" : "w-0 group-hover:w-full"}`}
                 />
               </Link>
             ))}
           </nav>
 
-          <Link
-            href="/contact"
-            className="hidden lg:block text-[10px] font-bold uppercase tracking-[0.2em] text-white hover:text-accent-500 transition-colors"
-          >
-            Inquiry
-          </Link>
+          <div className="flex items-center gap-6">
+            <Link
+              href="/contact"
+              className="hidden lg:inline-flex items-center border border-accent-500/40 px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.25em] text-accent-500 hover:bg-accent-500 hover:text-black transition-colors"
+            >
+              Inquiry
+            </Link>
+
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle menu"
+              className="lg:hidden relative z-[999] -mr-2 flex flex-col justify-center items-center w-10 h-10 cursor-pointer"
+            >
+              <span
+                className={`block h-px w-6 bg-white transition-all duration-300 ${mobileMenuOpen ? "rotate-45 translate-y-[0.5px]" : "-translate-y-1.25"}`}
+              />
+              <span
+                className={`block h-px w-6 bg-white transition-all duration-300 ${mobileMenuOpen ? "-rotate-45 translate-y-[-0.5px]" : "translate-y-1.25"}`}
+              />
+            </button>
+          </div>
         </div>
       </header>
-
-      <button
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        className="fixed top-6 right-6 lg:hidden !z-[1000] flex flex-col justify-center items-center w-10 h-10 cursor-pointer"
-      >
-        <span
-          className={`block h-px w-6 bg-white transition-all duration-300 ${mobileMenuOpen ? "rotate-45 translate-y-[0.5px]" : "-translate-y-[5px]"}`}
-        />
-        <span
-          className={`block h-px w-6 bg-white transition-all duration-300 ${mobileMenuOpen ? "-rotate-45 -translate-y-[0.5px]" : "translate-y-[5px]"}`}
-        />
-      </button>
 
       <div
         ref={menuRef}

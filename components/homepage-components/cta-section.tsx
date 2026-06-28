@@ -3,16 +3,23 @@
 import React from "react";
 import Link from "next/link";
 import { ArrowRight, Phone, Mail } from "lucide-react";
-import { useReveal } from "@/hooks/use-reveal";
+import { useSection } from "@/hooks/use-section";
 
-export function CtaSection() {
-  const scope = useReveal<HTMLDivElement>({
-    scroll: true,
+export function CtaSection({
+  phone,
+  email,
+}: {
+  phone: string;
+  email: string;
+}) {
+  const scope = useSection<HTMLDivElement>({
     y: 20,
     blur: 0,
     stagger: 0.1,
     duration: 0.8,
     start: "top 90%",
+    exitY: -50,
+    exitFade: 1,
   });
 
   return (
@@ -21,7 +28,7 @@ export function CtaSection() {
         <div className="max-w-4xl mb-16 lg:mb-24">
           <span
             data-reveal
-            className="text-[10px] font-black text-text-400 uppercase tracking-[0.3em] block mb-4"
+            className="text-[11px] font-black text-text-400 uppercase tracking-[0.3em] block mb-4"
           >
             Direct Contact
           </span>
@@ -40,7 +47,7 @@ export function CtaSection() {
           <div className="lg:col-span-7">
             <p
               data-reveal
-              className="text-sm sm:text-base md:text-lg text-text-400 font-light leading-relaxed max-w-2xl"
+              className="text-base sm:text-lg md:text-xl text-text-800 font-light leading-relaxed max-w-2xl"
             >
               Partner with{" "}
               <span className="text-text-950 font-medium">SM Chemicals</span>{" "}
@@ -77,15 +84,15 @@ export function CtaSection() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-background-200 border border-background-200 overflow-hidden">
           {[
             {
-              href: "tel:+919876543210",
+              href: `tel:${phone.replace(/\s+/g, "")}`,
               label: "Direct Line",
-              value: "+91 98765 43210",
+              value: phone,
               icon: Phone,
             },
             {
-              href: "mailto:info@smchemicals.co.in",
+              href: `mailto:${email}`,
               label: "Official Inquiry",
-              value: "info@smchemicals.co.in",
+              value: email,
               icon: Mail,
             },
           ].map((item) => (
@@ -96,7 +103,7 @@ export function CtaSection() {
               className="group bg-background-50 p-8 sm:p-12 flex items-center justify-between transition-colors duration-500 hover:bg-background-100"
             >
               <div className="space-y-1">
-                <span className="text-[9px] font-black text-text-400 uppercase tracking-[0.2em] block">
+                <span className="text-[11px] font-black text-text-400 uppercase tracking-[0.2em] block">
                   {item.label}
                 </span>
                 <span className="text-base sm:text-lg text-text-950 font-medium tracking-tight block">

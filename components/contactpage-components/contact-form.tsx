@@ -2,6 +2,7 @@
 
 import React, {useState} from "react";
 import {Send, CheckCircle2, RefreshCw} from "lucide-react";
+import {CtaSubmit} from "@/components/ui/cta-button";
 
 const industries = [
     "Water Treatment", "ETP/STP", "Construction", "Textile",
@@ -12,39 +13,72 @@ const industries = [
 export function ContactForm() {
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    const handleSubmit = async (e: React.BaseSyntheticEvent) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        setError(null);
         setIsLoading(true);
 
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        const fd = new FormData(e.currentTarget);
+        const payload = {
+            name: String(fd.get("fullName") || ""),
+            email: String(fd.get("email") || ""),
+            message: String(fd.get("message") || ""),
+            label: "Product Inquiry",
+            fields: {
+                Company: String(fd.get("company") || ""),
+                Phone: String(fd.get("phone") || ""),
+                "Industry Sector": String(fd.get("industry") || ""),
+                "Primary Chemicals": String(fd.get("chemicals") || ""),
+            },
+        };
 
-        setIsLoading(false);
-        setIsSubmitted(true);
+        try {
+            const res = await fetch("/api/contact", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(payload),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || data.ok === false) {
+                throw new Error(data.error || "Something went wrong. Please try again.");
+            }
+            setIsSubmitted(true);
+        } catch (err) {
+            setError(
+                err instanceof Error ? err.message : "Could not send. Please try again.",
+            );
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const inputClasses = `
-        w-full bg-transparent border-b border-background-200 py-4 
-        text-text-950 placeholder:text-text-300 
-        hover:text-text-500 focus:text-text-500 
-        focus:outline-none focus:border-accent-500 
+        w-full bg-transparent border-b border-background-200 py-4
+        text-text-950 placeholder:text-text-300
+        hover:text-text-500 focus:text-text-500
+        focus:outline-none focus:border-accent-500
         transition-colors font-light text-lg appearance-none rounded-none
     `;
 
-    const labelClasses = "text-[10px] font-black text-text-400 uppercase tracking-[0.3em] block mb-1";
+    const labelClasses = "text-[11px] font-black text-text-400 uppercase tracking-[0.3em] block mb-1";
 
     if (isSubmitted) {
         return (
             <div className="py-20 text-center animate-in fade-in zoom-in duration-500">
                 <CheckCircle2 className="h-16 w-16 text-text-500 mx-auto mb-6"/>
-                <h3 className="text-3xl font-bold text-text-950 tracking-tighter">Request Sent Successful</h3>
+                <h3 className="text-3xl font-bold text-text-950 tracking-tighter">Request Sent Successfully</h3>
+                <p className="mt-4 text-text-400 text-base font-light">We&apos;ll be in touch within two working days.</p>
                 <div className="flex justify-center">
-                    <button
+                    <CtaSubmit
+                        variant="outline"
+                        type="button"
                         onClick={() => setIsSubmitted(false)}
-                        className="mt-8 text-[10px] font-black uppercase tracking-widest border border-background-200 px-8 py-4 hover:bg-text-950 hover:text-background-50 transition-all"
+                        className="mt-8"
                     >
                         Reset Form / Send another enquiry
-                    </button>
+                    </CtaSubmit>
                 </div>
             </div>
         );
@@ -55,23 +89,24 @@ export function ContactForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-12 text-left">
                 <div className="group">
                     <label className={labelClasses}>Full Name</label>
-                    <input type="text" placeholder="Entry name..." required className={inputClasses}/>
+                    <input name="fullName" type="text" placeholder="Entry name..." required className={inputClasses}/>
                 </div>
                 <div className="group">
                     <label className={labelClasses}>Company Entity</label>
-                    <input type="text" placeholder="Organization..." required className={inputClasses}/>
+                    <input name="company" type="text" placeholder="Organization..." required className={inputClasses}/>
                 </div>
                 <div className="group">
                     <label className={labelClasses}>Email Address</label>
-                    <input type="email" placeholder="terminal@domain.com" required className={inputClasses}/>
+                    <input name="email" type="email" placeholder="terminal@domain.com" required className={inputClasses}/>
                 </div>
                 <div className="group">
                     <label className={labelClasses}>Contact Number</label>
-                    <input type="tel" placeholder="+91 00000 00000" required className={inputClasses}/>
+                    <input name="phone" type="tel" placeholder="+91 00000 00000" required className={inputClasses}/>
                 </div>
                 <div className="group relative">
                     <label className={labelClasses}>Industry Sector</label>
                     <select
+                        name="industry"
                         required
                         defaultValue=""
                         className={inputClasses}
@@ -82,7 +117,7 @@ export function ContactForm() {
                         {industries.map((ind) => (
                             <option
                                 key={ind}
-                                value={ind.toLowerCase()}
+                                value={ind}
                                 className="bg-background-50 text-text-950"
                             >
                                 {ind}
@@ -97,21 +132,25 @@ export function ContactForm() {
                 </div>
                 <div className="group">
                     <label className={labelClasses}>Primary Chemicals</label>
-                    <input type="text" placeholder="e.g. PAC, Ferric Chloride..." className={inputClasses}/>
+                    <input name="chemicals" type="text" placeholder="e.g. PAC, Ferric Chloride..." className={inputClasses}/>
                 </div>
             </div>
 
             <div className="group text-left">
                 <label className={labelClasses}>Detailed Specifications</label>
-                <textarea rows={4} placeholder="Input requirements..." required
+                <textarea name="message" rows={4} placeholder="Input requirements..." required
                           className={`${inputClasses} resize-none`}/>
             </div>
 
+            {error && (
+                <p className="text-center text-base font-medium text-red-600">{error}</p>
+            )}
+
             <div className="flex justify-center pt-6">
-                <button
+                <CtaSubmit
                     type="submit"
                     disabled={isLoading}
-                    className="w-full md:w-auto min-w-65 bg-text-950 text-background-50 px-10 py-6 text-[10px] font-black uppercase tracking-[0.4em] hover:bg-accent-500 hover:text-text-950 transition-all flex items-center justify-center gap-4 disabled:opacity-50"
+                    className="w-full md:w-auto min-w-65"
                 >
                     {isLoading ? (
                         <RefreshCw className="h-4 w-4 animate-spin"/>
@@ -121,7 +160,7 @@ export function ContactForm() {
                             <Send className="h-4 w-4"/>
                         </>
                     )}
-                </button>
+                </CtaSubmit>
             </div>
         </form>
     );

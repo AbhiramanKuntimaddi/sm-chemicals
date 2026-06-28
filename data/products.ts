@@ -16,6 +16,7 @@ export interface Product {
 	name: string;
 	description: string;
 	spec: ProductSpec;
+	image?: string;
 }
 
 export interface ProductCategory {

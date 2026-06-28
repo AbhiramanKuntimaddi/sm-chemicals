@@ -1,16 +1,13 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { getLenis } from "@/lib/smooth-scroll";
-import { X, ArrowUpRight, ArrowRight } from "lucide-react";
-import {
-  productCategories,
-  type Product,
-  type ProductSpec,
-} from "@/data/products";
+import { X, ArrowUpRight, ArrowRight, ChevronDown } from "lucide-react";
+import type { Product, ProductSpec, ProductCategory } from "@/data/products";
+import { CtaButton } from "@/components/ui/cta-button";
 
 const SPEC_LABELS: { key: keyof ProductSpec; label: string }[] = [
   { key: "chemicalName", label: "Chemical Name" },
@@ -35,23 +32,37 @@ const CARD_PRIORITY: { key: keyof ProductSpec; label: string }[] = [
 
 const HEADER_OFFSET = 110;
 
-const sortedCategories = [...productCategories]
-  .sort((a, b) => a.name.localeCompare(b.name))
-  .map((cat) => ({
-    ...cat,
-    products: [...cat.products].sort((a, b) => a.name.localeCompare(b.name)),
-  }));
+export function ProductsGrid({ categories }: { categories: ProductCategory[] }) {
+  const sortedCategories = useMemo(
+    () =>
+      [...categories]
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((cat) => ({
+          ...cat,
+          products: [...cat.products].sort((a, b) =>
+            a.name.localeCompare(b.name),
+          ),
+        })),
+    [categories],
+  );
 
-export function ProductsGrid() {
-  const [activeId, setActiveId] = useState(sortedCategories[0].id);
+  const [activeId, setActiveId] = useState(sortedCategories[0]?.id ?? "");
   const [openProduct, setOpenProduct] = useState<Product | null>(null);
+  const [openCategory, setOpenCategory] = useState<string | null>(null);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const scrollToCategory = (id: string) => {
-    const el = document.getElementById(`cat-${id}`);
+    const mobile = document.getElementById(`m-cat-${id}`);
+    const desktop = document.getElementById(`cat-${id}`);
+    const el =
+      mobile && mobile.offsetParent !== null
+        ? mobile
+        : desktop && desktop.offsetParent !== null
+          ? desktop
+          : mobile || desktop;
     if (!el) return;
     const lenis = getLenis();
     if (lenis) lenis.scrollTo(el, { offset: -HEADER_OFFSET });
@@ -65,12 +76,10 @@ export function ProductsGrid() {
   useEffect(() => {
     const handleScrollToCategory = () => {
       const target = sessionStorage.getItem("smc:scrollCategory");
-      if (target) {
+      if (target && sortedCategories.some((c) => c.id === target)) {
         sessionStorage.removeItem("smc:scrollCategory");
-        if (sortedCategories.some((c) => c.id === target)) {
-          const t = setTimeout(() => scrollToCategory(target), 350);
-          return () => clearTimeout(t);
-        }
+        setOpenCategory(target);
+        setTimeout(() => scrollToCategory(target), 420);
       }
     };
 
@@ -168,31 +177,70 @@ export function ProductsGrid() {
   return (
     <section
       ref={rootRef}
-      className="py-24 bg-background-50 border-t border-background-200 font-sans text-text-950"
+      className="py-20 lg:py-24 bg-background-50 border-t border-background-200 font-sans text-text-950"
     >
-      <nav className="lg:hidden sticky top-20 z-30 bg-background-50/90 backdrop-blur-md border-b border-background-200">
-        <div className="flex gap-2 overflow-x-auto no-scrollbar px-4 py-3">
-          {sortedCategories.map((cat) => (
-            <button
+      {/* Mobile: accordion (no sticky / fixed) */}
+      <div className="lg:hidden border-t border-background-200">
+        {sortedCategories.map((cat) => {
+          const open = openCategory === cat.id;
+          return (
+            <div
               key={cat.id}
-              onClick={() => scrollToCategory(cat.id)}
-              className={`shrink-0 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.18em] rounded-full border transition-all duration-300 ${
-                activeId === cat.id
-                  ? "bg-text-950 text-background-50 border-text-950"
-                  : "text-text-400 border-background-200 bg-background-50 hover:bg-background-100"
-              }`}
+              id={`m-cat-${cat.id}`}
+              className="border-b border-background-200 scroll-mt-24"
             >
-              {cat.name}
-            </button>
-          ))}
-        </div>
-      </nav>
+              <button
+                onClick={() => setOpenCategory(open ? null : cat.id)}
+                aria-expanded={open}
+                className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left active:bg-background-100 transition-colors cursor-pointer"
+              >
+                <span className="flex flex-col min-w-0">
+                  <span className="text-[11px] font-black uppercase tracking-[0.3em] text-text-400 mb-1.5">
+                    {String(cat.products.length).padStart(2, "0")} Products
+                  </span>
+                  <span className="text-base font-black uppercase tracking-wider text-text-950 leading-tight">
+                    {cat.name}
+                  </span>
+                </span>
+                <ChevronDown
+                  size={20}
+                  className={`shrink-0 transition-transform duration-300 ${
+                    open ? "rotate-180 text-text-950" : "text-text-400"
+                  }`}
+                />
+              </button>
 
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="flex flex-col lg:flex-row gap-12 lg:gap-16">
-          <aside className="hidden lg:block w-60 shrink-0">
+              <div
+                className={`grid transition-[grid-template-rows] duration-300 ease-out ${
+                  open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                }`}
+              >
+                <div className="overflow-hidden">
+                  <p className="px-6 pb-6 text-text-800 text-base font-light leading-relaxed">
+                    {cat.blurb}
+                  </p>
+                  <div className="grid grid-cols-1 border-t border-background-200">
+                    {cat.products.map((product) => (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        reveal={false}
+                        onOpen={() => setOpenProduct(product)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="hidden lg:block mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="flex flex-row gap-16">
+          <aside className="w-60 shrink-0">
             <div className="sticky top-32">
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-text-950 block mb-6">
+              <span className="text-base font-black uppercase tracking-[0.3em] text-text-950 block mb-6">
                 Portfolio
               </span>
               <ul className="space-y-1">
@@ -200,7 +248,7 @@ export function ProductsGrid() {
                   <li key={cat.id}>
                     <button
                       onClick={() => scrollToCategory(cat.id)}
-                      className="group flex items-center gap-3 w-full text-left py-2"
+                      className="group flex items-center gap-3 w-full text-left py-2 cursor-pointer"
                     >
                       <span
                         className={`h-px transition-all duration-500 ${
@@ -210,7 +258,7 @@ export function ProductsGrid() {
                         }`}
                       />
                       <span
-                        className={`text-[11px] font-black uppercase tracking-[0.2em] transition-colors duration-500 ${
+                        className={`text-base font-black uppercase tracking-[0.2em] transition-colors duration-500 ${
                           activeId === cat.id
                             ? "text-text-950"
                             : "text-text-400 group-hover:text-text-950"
@@ -227,14 +275,10 @@ export function ProductsGrid() {
 
           <div className="flex-1 min-w-0 space-y-24">
             {sortedCategories.map((cat) => (
-              <section
-                key={cat.id}
-                id={`cat-${cat.id}`}
-                className="scroll-mt-32"
-              >
+              <section key={cat.id} id={`cat-${cat.id}`} className="scroll-mt-32">
                 <div className="flex items-end justify-between gap-6 border-b border-background-200 pb-6 mb-8">
                   <div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-text-400 block mb-3">
+                    <span className="text-[11px] font-black uppercase tracking-[0.3em] text-text-400 block mb-3">
                       {String(cat.products.length).padStart(2, "0")} Products
                     </span>
                     <h2 className="text-2xl lg:text-3xl font-black uppercase tracking-wider text-text-950">
@@ -242,7 +286,7 @@ export function ProductsGrid() {
                     </h2>
                   </div>
                 </div>
-                <p className="text-text-400 text-sm font-light leading-relaxed max-w-2xl mb-10">
+                <p className="text-text-800 text-base font-light leading-relaxed max-w-2xl mb-10">
                   {cat.blurb}
                 </p>
 
@@ -262,7 +306,7 @@ export function ProductsGrid() {
       </div>
 
       {openProduct && (
-        <div ref={drawerRef} className="fixed inset-0 z-150 flex justify-end">
+        <div ref={drawerRef} className="fixed inset-0 z-[1100] flex justify-end">
           <div
             className="absolute inset-0 bg-text-950/20 backdrop-blur-sm"
             onClick={closeDrawer}
@@ -275,7 +319,7 @@ export function ProductsGrid() {
               <div>
                 {openProduct.spec.chemicalName &&
                   openProduct.spec.chemicalName !== openProduct.name && (
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-text-400 block mb-3">
+                    <span className="text-[11px] font-black uppercase tracking-[0.3em] text-text-400 block mb-3">
                       {openProduct.spec.chemicalName}
                     </span>
                   )}
@@ -285,7 +329,7 @@ export function ProductsGrid() {
               </div>
               <button
                 onClick={closeDrawer}
-                className="shrink-0 p-2 -mr-2 text-text-400 hover:text-text-950 transition-colors duration-300"
+                className="shrink-0 p-2 -mr-2 text-text-400 hover:text-text-950 transition-colors duration-300 cursor-pointer"
                 aria-label="Close"
               >
                 <X size={20} />
@@ -293,27 +337,37 @@ export function ProductsGrid() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-8 lg:p-12 space-y-12 bg-background-50">
+              {openProduct.image && (
+                <div className="overflow-hidden rounded-sm border border-background-200">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={openProduct.image}
+                    alt={openProduct.name}
+                    className="h-56 w-full object-cover lg:h-64"
+                  />
+                </div>
+              )}
               <div className="space-y-4">
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-text-950 block">
+                <span className="text-[11px] font-black uppercase tracking-[0.3em] text-text-950 block">
                   Overview
                 </span>
-                <p className="text-text-400 text-sm font-light leading-relaxed">
+                <p className="text-text-800 text-base font-light leading-relaxed">
                   {openProduct.description}
                 </p>
               </div>
 
               {drawerSpecs.length > 0 && (
                 <div>
-                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-text-950 block mb-6">
+                  <span className="text-[11px] font-black uppercase tracking-[0.3em] text-text-950 block mb-6">
                     Specifications
                   </span>
                   <dl className="divide-y divide-background-200 border-y border-background-200">
                     {drawerSpecs.map(({ key, label }) => (
                       <div key={key} className="flex gap-6 py-4">
-                        <dt className="w-32 shrink-0 text-[10px] font-black uppercase tracking-[0.2em] text-text-400 pt-0.5">
+                        <dt className="w-32 shrink-0 text-[11px] font-black uppercase tracking-[0.2em] text-text-400 pt-0.5">
                           {label}
                         </dt>
-                        <dd className="text-sm font-light text-text-950 break-words leading-relaxed">
+                        <dd className="text-base font-light text-text-950 break-words leading-relaxed">
                           {openProduct.spec[key]}
                         </dd>
                       </div>
@@ -324,16 +378,13 @@ export function ProductsGrid() {
             </div>
 
             <div className="p-8 lg:p-12 border-t border-background-200 bg-background-50">
-              <Link
-                href="/contact"
-                className="group flex items-center justify-center gap-3 w-full bg-text-950 text-background-50 py-4 text-[10px] font-black uppercase tracking-[0.3em] hover:bg-background-900 transition-all duration-300"
-              >
+              <CtaButton href="/contact" className="w-full">
                 Request a Quote
                 <ArrowRight
                   size={14}
                   className="group-hover:translate-x-1 transition-transform"
                 />
-              </Link>
+              </CtaButton>
             </div>
           </div>
         </div>
@@ -345,9 +396,11 @@ export function ProductsGrid() {
 function ProductCard({
   product,
   onOpen,
+  reveal = true,
 }: {
   product: Product;
   onOpen: () => void;
+  reveal?: boolean;
 }) {
   const keySpecs = CARD_PRIORITY.filter(({ key }) => product.spec[key]).slice(
     0,
@@ -357,7 +410,7 @@ function ProductCard({
   return (
     <button
       onClick={onOpen}
-      className="pg-card group text-left flex flex-col h-full bg-background-50 p-10 border-b border-r border-background-200 transition-all duration-500 hover:bg-background-100 relative overflow-hidden"
+      className={`${reveal ? "pg-card " : ""}group text-left flex flex-col h-full bg-background-50 p-8 lg:p-10 border-b border-r border-background-200 transition-all duration-500 hover:bg-background-100 relative overflow-hidden cursor-pointer`}
     >
       <div className="flex items-start justify-between gap-4 mb-4 relative z-10">
         <h3 className="text-base font-bold uppercase tracking-wider text-text-950 leading-snug">
@@ -369,7 +422,7 @@ function ProductCard({
         />
       </div>
 
-      <p className="text-sm font-light leading-relaxed text-text-400 line-clamp-3 mb-8 relative z-10">
+      <p className="text-base font-light leading-relaxed text-text-800 line-clamp-3 mb-8 relative z-10">
         {product.description}
       </p>
 
@@ -377,7 +430,7 @@ function ProductCard({
         <dl className="mt-auto flex flex-wrap gap-x-6 gap-y-3 pt-5 border-t border-background-200 relative z-10 w-full">
           {keySpecs.map(({ key, label }) => (
             <div key={key} className="min-w-0">
-              <dt className="text-[9px] font-black uppercase tracking-[0.2em] text-text-400 mb-0.5">
+              <dt className="text-[11px] font-black uppercase tracking-[0.2em] text-text-400 mb-0.5">
                 {label}
               </dt>
               <dd className="text-[12px] font-medium text-text-950/80 truncate">

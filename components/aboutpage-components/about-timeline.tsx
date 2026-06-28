@@ -1,40 +1,14 @@
 "use client";
 
 import React from "react";
-import { useReveal } from "@/hooks/use-reveal";
+import { useSection } from "@/hooks/use-section";
+import type { AboutTimelineSection } from "@/data/about";
 
-const timeline = [
-  {
-    year: "2008",
-    title: "Company Founded",
-    description:
-      "SM Chemicals established in Hyderabad with a vision to provide quality chemicals to industries across India.",
-  },
-  {
-    year: "2012",
-    title: "Expanded Product Range",
-    description:
-      "Added water treatment, ETP chemicals, and construction chemicals to our growing portfolio.",
-  },
-  {
-    year: "2020",
-    title: "ISO Certification",
-    description:
-      "Achieved ISO 9001:2015 certification, reinforcing our commitment to quality management systems.",
-  },
-  {
-    year: "2024",
-    title: "Industry Leader",
-    description:
-      "Now serving 500+ clients across 20+ industries, recognized as a trusted chemical solutions partner.",
-  },
-];
-
-export function AboutTimeline() {
-  const scope = useReveal<HTMLDivElement>({
-    scroll: true,
+export function AboutTimeline({ content }: { content: AboutTimelineSection }) {
+  const scope = useSection<HTMLDivElement>({
     stagger: 0.1,
     start: "top 85%",
+    exitY: -50,
   });
 
   return (
@@ -43,24 +17,24 @@ export function AboutTimeline() {
       id="milestones"
       className="dark bg-background-50 py-32 overflow-hidden border-t border-background-200 selection:bg-accent-500 selection:text-black"
     >
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="mb-24 relative">
+      <div ref={scope} className="max-w-7xl mx-auto px-6">
+        <div data-reveal className="mb-24 relative">
           <div className="flex items-center gap-4 mb-8">
             <div className="h-px w-12 bg-accent-500" />
-            <span className="text-[10px] font-black text-accent-500 uppercase tracking-[0.6em] block">
-              Our Journey
+            <span className="text-[11px] font-black text-accent-500 uppercase tracking-[0.6em] block">
+              {content.eyebrow}
             </span>
           </div>
 
           <h2 className="text-6xl md:text-8xl font-bold tracking-tighter text-text-950 leading-[0.8]">
-            Milestones <br />
+            {content.heading} <br />
             <span className="text-text-400/30 font-light italic text-5xl md:text-7xl">
-              of Excellence.
+              {content.headingAccent}
             </span>
           </h2>
 
           <div className="absolute top-0 right-0 hidden lg:block border-l border-background-200 pl-6 py-2">
-            <p className="text-[9px] text-text-400 uppercase tracking-[0.2em] leading-relaxed font-bold">
+            <p className="text-[11px] text-text-400 uppercase tracking-[0.2em] leading-relaxed font-bold">
               Chronological Data
               <br />
               Industrial Growth Archive
@@ -70,11 +44,8 @@ export function AboutTimeline() {
           </div>
         </div>
 
-        <div
-          ref={scope}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-background-200 border border-background-200"
-        >
-          {timeline.map((item) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-background-200 border border-background-200">
+          {content.items.map((item) => (
             <div
               key={item.year}
               data-reveal
@@ -85,11 +56,11 @@ export function AboutTimeline() {
                   {item.year}
                 </span>
 
-                <h3 className="text-accent-500 font-black uppercase tracking-[0.2em] text-[10px] mb-4">
+                <h3 className="text-accent-500 font-black uppercase tracking-[0.2em] text-[11px] mb-4">
                   {item.title}
                 </h3>
 
-                <p className="text-text-400 text-sm leading-relaxed font-light">
+                <p className="text-text-400 text-base leading-relaxed font-light">
                   {item.description}
                 </p>
               </div>
