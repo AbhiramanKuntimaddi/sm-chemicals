@@ -7,7 +7,8 @@ import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { getLenis } from "@/lib/smooth-scroll";
 import { X, ArrowUpRight, ArrowRight, ChevronDown } from "lucide-react";
 import type { Product, ProductSpec, ProductCategory } from "@/data/products";
-import { CtaButton } from "@/components/ui/cta-button";
+import { CtaSubmit } from "@/components/ui/cta-button";
+import { ProductQuoteForm } from "./product-quote-form";
 
 const SPEC_LABELS: { key: keyof ProductSpec; label: string }[] = [
   { key: "chemicalName", label: "Chemical Name" },
@@ -48,6 +49,11 @@ export function ProductsGrid({ categories }: { categories: ProductCategory[] }) 
 
   const [activeId, setActiveId] = useState(sortedCategories[0]?.id ?? "");
   const [openProduct, setOpenProduct] = useState<Product | null>(null);
+  const [quoteMode, setQuoteMode] = useState(false);
+
+  useEffect(() => {
+    setQuoteMode(false);
+  }, [openProduct]);
   const [openCategory, setOpenCategory] = useState<string | null>(null);
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -336,7 +342,17 @@ export function ProductsGrid({ categories }: { categories: ProductCategory[] }) 
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-8 lg:p-12 space-y-12 bg-background-50">
+            <div
+              data-lenis-prevent
+              className="flex-1 overflow-y-auto overscroll-contain p-8 lg:p-12 space-y-12 bg-background-50"
+            >
+              {quoteMode ? (
+                <ProductQuoteForm
+                  product={openProduct}
+                  onBack={() => setQuoteMode(false)}
+                />
+              ) : (
+                <>
               {openProduct.image && (
                 <div className="overflow-hidden rounded-sm border border-background-200">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -375,17 +391,25 @@ export function ProductsGrid({ categories }: { categories: ProductCategory[] }) 
                   </dl>
                 </div>
               )}
+                </>
+              )}
             </div>
 
-            <div className="p-8 lg:p-12 border-t border-background-200 bg-background-50">
-              <CtaButton href="/contact" className="w-full">
-                Request a Quote
-                <ArrowRight
-                  size={14}
-                  className="group-hover:translate-x-1 transition-transform"
-                />
-              </CtaButton>
-            </div>
+            {!quoteMode && (
+              <div className="p-8 lg:p-12 border-t border-background-200 bg-background-50">
+                <CtaSubmit
+                  type="button"
+                  onClick={() => setQuoteMode(true)}
+                  className="w-full"
+                >
+                  Request a Quote
+                  <ArrowRight
+                    size={14}
+                    className="group-hover:translate-x-1 transition-transform"
+                  />
+                </CtaSubmit>
+              </div>
+            )}
           </div>
         </div>
       )}

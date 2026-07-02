@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireRole, DEV_BYPASS } from "@/lib/auth";
+import { requirePermission, DEV_BYPASS } from "@/lib/auth";
 import { supabaseConfigured } from "@/lib/cms/products";
 import { logActivity } from "@/lib/cms/activity";
 import type {
@@ -28,7 +28,7 @@ export async function saveCareers(
 	_prev: CareersState,
 	formData: FormData,
 ): Promise<CareersState> {
-	await requireRole("editor");
+	await requirePermission("careers");
 	if (DEV_BYPASS && !supabaseConfigured()) return { error: DEV_NOTICE };
 
 	let parsed: Partial<CareersContent>;

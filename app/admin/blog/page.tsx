@@ -1,11 +1,11 @@
-import { requireRole, DEV_BYPASS } from "@/lib/auth";
+import { requirePermission, DEV_BYPASS } from "@/lib/auth";
 import { getAllPosts } from "@/lib/cms/blog";
 import { BlogManager } from "./BlogManager";
 
 export const metadata = { title: "Blog" };
 
 export default async function BlogAdmin() {
-	await requireRole("editor");
+	await requirePermission("blog");
 	const posts = await getAllPosts();
 
 	return (
@@ -18,11 +18,11 @@ export default async function BlogAdmin() {
 					</span>
 				</div>
 				<h1 className="text-white text-5xl md:text-7xl font-bold tracking-tighter leading-[0.9]">
-					Journal<span className="text-white/30 font-light italic">.</span>
+					Blog<span className="text-white/30 font-light italic">.</span>
 				</h1>
 				<p className="mt-6 text-white/45 text-sm font-light tracking-wide">
-					Write posts in HTML. A post goes live on the site as soon as it&apos;s
-					marked Published.
+					Write and format posts in the editor. A post goes live on the site as
+					soon as it&apos;s marked Published.
 				</p>
 				{DEV_BYPASS && (
 					<p className="mt-4 inline-block border border-amber-400/40 bg-amber-400/10 px-4 py-2 text-amber-300 text-xs font-medium tracking-wide">

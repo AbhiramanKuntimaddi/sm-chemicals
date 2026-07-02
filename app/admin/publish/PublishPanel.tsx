@@ -83,6 +83,16 @@ function Item({ row }: { row: PageDraft }) {
 							</button>
 						</>
 					)}
+					{row.status !== "clean" && (
+						<a
+							href={`/preview?path=${encodeURIComponent(row.path)}`}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="uppercase tracking-[0.2em] text-accent-500 text-[0.6rem] font-black transition-opacity hover:opacity-70"
+						>
+							Preview draft ↗
+						</a>
+					)}
 					<a
 						href={row.path}
 						target="_blank"

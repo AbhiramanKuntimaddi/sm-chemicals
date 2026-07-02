@@ -3,18 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export function AdminNav({ canManage }: { canManage: boolean }) {
+export function AdminNav({ permissions }: { permissions: string[] }) {
 	const path = usePathname();
+	const can = (section: string) => permissions.includes(section);
 
 	const links: { href: string; label: string }[] = [
 		{ href: "/admin", label: "Overview" },
-		...(canManage
-			? [
-					{ href: "/admin/publish", label: "Publish" },
-					{ href: "/admin/users", label: "Users" },
-					{ href: "/admin/activity", label: "Activity" },
-				]
-			: []),
+		...(can("publish") ? [{ href: "/admin/publish", label: "Publish" }] : []),
+		...(can("users") ? [{ href: "/admin/users", label: "Users" }] : []),
+		...(can("activity") ? [{ href: "/admin/activity", label: "Activity" }] : []),
 		{ href: "/admin/account", label: "Account" },
 	];
 

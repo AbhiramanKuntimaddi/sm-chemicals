@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireRole, DEV_BYPASS } from "@/lib/auth";
+import { requirePermission, DEV_BYPASS } from "@/lib/auth";
 import { supabaseConfigured } from "@/lib/cms/products";
 import { logActivity } from "@/lib/cms/activity";
 
@@ -23,7 +23,7 @@ export async function savePost(
 	_prev: BlogState,
 	formData: FormData,
 ): Promise<BlogState> {
-	await requireRole("editor");
+	await requirePermission("blog");
 	if (DEV_BYPASS && !supabaseConfigured()) return { error: DEV_NOTICE };
 
 	const id = String(formData.get("id") ?? "").trim();
@@ -88,7 +88,7 @@ export async function savePost(
 }
 
 export async function deletePost(id: string): Promise<RowResult> {
-	await requireRole("editor");
+	await requirePermission("blog");
 	if (DEV_BYPASS && !supabaseConfigured()) return { error: DEV_NOTICE };
 	if (!id) return { error: "Missing post id." };
 

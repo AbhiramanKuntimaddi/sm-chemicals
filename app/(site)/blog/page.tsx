@@ -28,7 +28,7 @@ export default async function BlogPage() {
 					<div className="flex items-center gap-3 mb-5">
 						<div className="h-px w-6 bg-accent-500/60" />
 						<span className="text-[11px] font-black text-text-400 uppercase tracking-[0.5em]">
-							Journal
+							Blog
 						</span>
 					</div>
 					<h1 className="text-4xl md:text-6xl font-bold tracking-tighter leading-[0.9] text-text-950">

@@ -151,7 +151,8 @@ export function CareerApplyModal({
 			/>
 			<div
 				ref={panelRef}
-				className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-background-50 border border-background-200 shadow-2xl"
+				data-lenis-prevent
+				className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto overscroll-contain bg-background-50 border border-background-200 shadow-2xl"
 			>
 				<div className="flex items-start justify-between gap-6 p-8 border-b border-background-200">
 					<div>

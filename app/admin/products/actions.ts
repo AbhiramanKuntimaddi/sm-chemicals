@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireRole, DEV_BYPASS } from "@/lib/auth";
+import { requirePermission, DEV_BYPASS } from "@/lib/auth";
 import { supabaseConfigured } from "@/lib/cms/products";
 import { logActivity } from "@/lib/cms/activity";
 
@@ -57,7 +57,7 @@ export async function createCategory(
 	_prev: ActionState,
 	formData: FormData,
 ): Promise<ActionState> {
-	await requireRole("admin");
+	await requirePermission("products");
 	if (DEV_BYPASS && !supabaseConfigured()) return { error: DEV_NOTICE };
 
 	const parsed = CategorySchema.safeParse({
@@ -97,7 +97,7 @@ export async function updateCategory(
 	_prev: ActionState,
 	formData: FormData,
 ): Promise<ActionState> {
-	await requireRole("admin");
+	await requirePermission("products");
 	if (DEV_BYPASS && !supabaseConfigured()) return { error: DEV_NOTICE };
 
 	const id = String(formData.get("id") ?? "");
@@ -122,7 +122,7 @@ export async function updateCategory(
 }
 
 export async function deleteCategory(id: string): Promise<RowResult> {
-	await requireRole("admin");
+	await requirePermission("products");
 	if (DEV_BYPASS && !supabaseConfigured()) return { error: DEV_NOTICE };
 	if (!id) return { error: "Missing category id." };
 
@@ -150,7 +150,7 @@ export async function saveProduct(
 	_prev: ActionState,
 	formData: FormData,
 ): Promise<ActionState> {
-	await requireRole("editor");
+	await requirePermission("products");
 	if (DEV_BYPASS && !supabaseConfigured()) return { error: DEV_NOTICE };
 
 	const id = String(formData.get("id") ?? "").trim();
@@ -194,7 +194,7 @@ export async function saveProduct(
 }
 
 export async function deleteProduct(id: string): Promise<RowResult> {
-	await requireRole("editor");
+	await requirePermission("products");
 	if (DEV_BYPASS && !supabaseConfigured()) return { error: DEV_NOTICE };
 	if (!id) return { error: "Missing product id." };
 

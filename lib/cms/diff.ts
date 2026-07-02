@@ -2,6 +2,9 @@ type J = unknown;
 
 const IGNORE_KEYS = new Set(["created_at", "updated_at"]);
 const LABEL_KEYS = ["title", "name", "label", "role", "author", "quote", "id"];
+// Fields we can match array items by, so an edit reads as a value change rather
+// than a remove + add. Ordered by preference.
+const KEY_FIELDS = ["id", "slug", "key", "label", "name", "title", "year"];
 
 const isObj = (v: J): v is Record<string, J> =>
 	typeof v === "object" && v !== null && !Array.isArray(v);
@@ -20,15 +23,35 @@ function shortVal(v: J): string {
 	if (typeof v === "string")
 		return v.length > 60 ? `“${v.slice(0, 57)}…”` : `“${v}”`;
 	if (Array.isArray(v)) return `${v.length} item${v.length === 1 ? "" : "s"}`;
-	if (typeof v === "object") return "{…}";
+	if (typeof v === "object") {
+		const parts = Object.entries(v as Record<string, J>)
+			.filter(
+				([k, val]) =>
+					!IGNORE_KEYS.has(k) &&
+					val !== null &&
+					val !== undefined &&
+					typeof val !== "object",
+			)
+			.map(([k, val]) => `${k}: ${val}`);
+		return parts.length ? `{ ${parts.join(", ")} }` : "{…}";
+	}
 	return String(v);
 }
 
 const field = (path: string, key: string): string =>
 	path ? `${path} · ${key}` : key;
 
-function keyed(arr: J[]): arr is Record<string, J>[] {
-	return arr.length > 0 && arr.every((x) => isObj(x) && "id" in x);
+// Returns a field name that uniquely identifies every item in the array, or null.
+function keyField(arr: J[]): string | null {
+	if (arr.length === 0 || !arr.every(isObj)) return null;
+	for (const k of KEY_FIELDS) {
+		const vals = arr.map((x) => (x as Record<string, J>)[k]);
+		if (vals.every((v) => typeof v === "string" || typeof v === "number")) {
+			const strs = vals.map(String);
+			if (new Set(strs).size === strs.length) return k;
+		}
+	}
+	return null;
 }
 
 export function deepEqual(a: J, b: J): boolean {
@@ -47,15 +70,21 @@ export function deepEqual(a: J, b: J): boolean {
 }
 
 function diffArray(a: J[], b: J[], path: string, out: string[]): void {
-	if (keyed(a) && keyed(b)) {
-		const idOf = (x: Record<string, J>) => String(x.id);
-		const am = new Map(a.map((x) => [idOf(x), x]));
-		const bm = new Map(b.map((x) => [idOf(x), x]));
-		for (const x of a)
+	const ka = keyField(a);
+	const kb = keyField(b);
+	const key = ka && ka === kb ? ka : null;
+
+	if (key) {
+		const A = a as Record<string, J>[];
+		const B = b as Record<string, J>[];
+		const idOf = (x: Record<string, J>) => String(x[key]);
+		const am = new Map(A.map((x) => [idOf(x), x]));
+		const bm = new Map(B.map((x) => [idOf(x), x]));
+		for (const x of A)
 			if (!bm.has(idOf(x))) out.push(`${path}: removed “${labelOf(x)}”`);
-		for (const x of b)
+		for (const x of B)
 			if (!am.has(idOf(x))) out.push(`${path}: added “${labelOf(x)}”`);
-		for (const x of b) {
+		for (const x of B) {
 			const before = am.get(idOf(x));
 			if (before && !deepEqual(before, x))
 				walk(before, x, `${path} · ${labelOf(x)}`, out);
@@ -65,17 +94,17 @@ function diffArray(a: J[], b: J[], path: string, out: string[]): void {
 				.filter((x) => other.has(idOf(x)))
 				.map(idOf)
 				.join(",");
-		if (order(a, bm) !== order(b, am)) out.push(`${path}: reordered`);
+		if (order(A, bm) !== order(B, am)) out.push(`${path}: reordered`);
 		return;
 	}
-	const show = (v: J) => shortVal(v);
+
 	const enc = (v: J) => JSON.stringify(v);
 	const as = new Set(a.map(enc));
 	const bs = new Set(b.map(enc));
 	for (const v of a)
-		if (!bs.has(enc(v))) out.push(`${path}: removed ${show(v)}`);
+		if (!bs.has(enc(v))) out.push(`${path}: removed ${shortVal(v)}`);
 	for (const v of b)
-		if (!as.has(enc(v))) out.push(`${path}: added ${show(v)}`);
+		if (!as.has(enc(v))) out.push(`${path}: added ${shortVal(v)}`);
 }
 
 function walk(a: J, b: J, path: string, out: string[]): void {

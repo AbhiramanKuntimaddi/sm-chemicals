@@ -1,4 +1,4 @@
-import { requireRole, DEV_BYPASS } from "@/lib/auth";
+import { requirePermission, DEV_BYPASS } from "@/lib/auth";
 import { getDrafts } from "@/lib/cms/snapshots";
 import { supabaseConfigured } from "@/lib/cms/products";
 import { PublishPanel } from "./PublishPanel";
@@ -6,7 +6,7 @@ import { PublishPanel } from "./PublishPanel";
 export const metadata = { title: "Publish" };
 
 export default async function PublishAdmin() {
-	await requireRole("admin");
+	await requirePermission("publish");
 	const pages = await getDrafts();
 	const dirty = pages.filter((p) => p.status !== "clean").length;
 

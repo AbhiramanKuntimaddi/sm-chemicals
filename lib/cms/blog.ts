@@ -1,7 +1,17 @@
+import { draftMode } from "next/headers";
 import { createPublicClient } from "@/lib/supabase/public";
+import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { supabaseConfigured } from "@/lib/cms/products";
 import type { BlogPost } from "@/data/blog";
+
+async function isDraft(): Promise<boolean> {
+	try {
+		return (await draftMode()).isEnabled;
+	} catch {
+		return false;
+	}
+}
 
 type Row = {
 	id: string;
@@ -31,6 +41,16 @@ function map(r: Row): BlogPost {
 export async function getPublishedPosts(): Promise<BlogPost[]> {
 	if (!supabaseConfigured()) return [];
 	try {
+		// Draft mode (staff preview) — read via the authed client so RLS lets
+		// unpublished posts through, and show every post.
+		if (await isDraft()) {
+			const db = await createClient();
+			const { data } = await db
+				.from("blog_posts")
+				.select("*")
+				.order("created_at", { ascending: false });
+			return (data ?? []).map((r) => map(r as Row));
+		}
 		const db = createPublicClient();
 		const { data } = await db
 			.from("blog_posts")
@@ -46,6 +66,15 @@ export async function getPublishedPosts(): Promise<BlogPost[]> {
 export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
 	if (!supabaseConfigured()) return null;
 	try {
+		if (await isDraft()) {
+			const db = await createClient();
+			const { data } = await db
+				.from("blog_posts")
+				.select("*")
+				.eq("slug", slug)
+				.maybeSingle();
+			return data ? map(data as Row) : null;
+		}
 		const db = createPublicClient();
 		const { data } = await db
 			.from("blog_posts")

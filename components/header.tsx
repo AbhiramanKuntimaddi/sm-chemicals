@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
 
@@ -23,6 +23,15 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [visible, setVisible] = useState(true);
   const pathname = usePathname();
+  const router = useRouter();
+
+  const goInquiry = () => {
+    sessionStorage.setItem("smc:scrollInquiry", "1");
+    setMobileMenuOpen(false);
+    if (pathname === "/contact")
+      window.dispatchEvent(new Event("scroll-to-inquiry"));
+    else router.push("/contact");
+  };
 
   const lastScrollY = useRef(0);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -123,12 +132,13 @@ export function Header() {
           </nav>
 
           <div className="flex items-center gap-6">
-            <Link
-              href="/contact"
-              className="hidden lg:inline-flex items-center border border-accent-500/40 px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.25em] text-accent-500 hover:bg-accent-500 hover:text-black transition-colors"
+            <button
+              type="button"
+              onClick={goInquiry}
+              className="hidden lg:inline-flex items-center border border-accent-500/40 px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.25em] text-accent-500 hover:bg-accent-500 hover:text-black transition-colors cursor-pointer"
             >
               Inquiry
-            </Link>
+            </button>
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

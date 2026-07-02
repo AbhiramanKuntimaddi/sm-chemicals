@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireRole, DEV_BYPASS } from "@/lib/auth";
+import { requirePermission, DEV_BYPASS } from "@/lib/auth";
 import { supabaseConfigured } from "@/lib/cms/products";
 import { logActivity } from "@/lib/cms/activity";
 import {
@@ -51,7 +51,7 @@ async function snapshot(key: SnapshotKey): Promise<string | null> {
 }
 
 export async function publishPage(key: SnapshotKey): Promise<PublishState> {
-	await requireRole("admin");
+	await requirePermission("publish");
 	if (DEV_BYPASS && !supabaseConfigured()) return { error: DEV_NOTICE };
 	if (!SNAPSHOT_KEYS.includes(key)) return { error: "Unknown section." };
 	const at = await snapshot(key);
@@ -63,7 +63,7 @@ export async function publishPage(key: SnapshotKey): Promise<PublishState> {
 }
 
 export async function publishAll(): Promise<PublishState> {
-	await requireRole("admin");
+	await requirePermission("publish");
 	if (DEV_BYPASS && !supabaseConfigured()) return { error: DEV_NOTICE };
 	for (const key of SNAPSHOT_KEYS) {
 		const at = await snapshot(key);
@@ -76,7 +76,7 @@ export async function publishAll(): Promise<PublishState> {
 }
 
 export async function discardPage(key: SnapshotKey): Promise<PublishState> {
-	await requireRole("admin");
+	await requirePermission("publish");
 	if (DEV_BYPASS && !supabaseConfigured()) return { error: DEV_NOTICE };
 	if (!SNAPSHOT_KEYS.includes(key)) return { error: "Unknown section." };
 

@@ -1,13 +1,19 @@
-import { requireRole, DEV_BYPASS } from "@/lib/auth";
+import { requirePermission, DEV_BYPASS } from "@/lib/auth";
 import { getProfiles } from "@/lib/cms/users";
+import { getRoles, getPermissionsByRole } from "@/lib/cms/roles";
 import { UsersManager } from "./UsersManager";
 import { AdminInvite } from "./AdminInvite";
+import { RolesManager } from "./RolesManager";
 
 export const metadata = { title: "Users" };
 
 export default async function UsersRoute() {
-	const profile = await requireRole("admin");
-	const members = await getProfiles();
+	const profile = await requirePermission("users");
+	const [members, roles, permsByRole] = await Promise.all([
+		getProfiles(),
+		getRoles(),
+		getPermissionsByRole(),
+	]);
 
 	return (
 		<div className="mx-auto max-w-5xl px-6 py-16 md:px-10 md:py-20">
@@ -36,6 +42,7 @@ export default async function UsersRoute() {
 				members={members}
 				currentUserId={profile.id}
 				currentRole={profile.role}
+				roles={roles}
 			/>
 
 			<div className="mt-16 border-t border-white/10 pt-14">
@@ -48,7 +55,21 @@ export default async function UsersRoute() {
 				<p className="mb-8 text-white/45 text-sm font-light">
 					They sign in with the email and password you set here.
 				</p>
-				<AdminInvite />
+				<AdminInvite roles={roles} />
+			</div>
+
+			<div className="mt-16 border-t border-white/10 pt-14">
+				<div className="mb-2 flex items-center gap-3">
+					<span className="h-px w-5 bg-accent-500/60" />
+					<span className="uppercase tracking-[0.3em] text-white/70 text-[0.66rem] font-black">
+						Roles & permissions
+					</span>
+				</div>
+				<p className="mb-8 max-w-xl text-white/45 text-sm font-light leading-relaxed">
+					Create roles and choose which sections each one can access. Founder
+					always has full access.
+				</p>
+				<RolesManager roles={roles} permsByRole={permsByRole} />
 			</div>
 		</div>
 	);

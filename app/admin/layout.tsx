@@ -18,8 +18,7 @@ export default async function AdminLayout({
 	children: React.ReactNode;
 }) {
 	const profile = await getProfile();
-	const canManage =
-		profile?.role === "founder" || profile?.role === "admin";
+	const permissions = profile?.permissions ?? [];
 
 	return (
 		<div className="relative min-h-dvh bg-[#0a0d09] text-white antialiased selection:bg-accent-500 selection:text-black">
@@ -45,7 +44,7 @@ export default async function AdminLayout({
 									SM<span className="text-accent-500"> · </span>CMS
 								</span>
 							</Link>
-							<AdminNav canManage={canManage} />
+							<AdminNav permissions={permissions} />
 						</div>
 						<div className="flex items-center gap-5">
 							{DEV_BYPASS && (

@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { createUser, type CreateUserState } from "./actions";
+import type { RoleRow } from "@/lib/cms/roles";
 
 const initial: CreateUserState = {};
 
@@ -10,8 +11,9 @@ const inputCls =
 const labelCls =
 	"uppercase tracking-[0.3em] text-white/40 text-[0.6rem] font-black";
 
-export function AdminInvite() {
+export function AdminInvite({ roles }: { roles: RoleRow[] }) {
 	const [state, action, pending] = useActionState(createUser, initial);
+	const assignable = roles.filter((r) => r.key !== "founder");
 
 	return (
 		<form action={action} className="flex flex-col gap-6">
@@ -42,12 +44,11 @@ export function AdminInvite() {
 						defaultValue="editor"
 						className={`${inputCls} cursor-pointer`}
 					>
-						<option value="editor" className="bg-[#0a0d09]">
-							Editor
-						</option>
-						<option value="admin" className="bg-[#0a0d09]">
-							Admin
-						</option>
+						{assignable.map((r) => (
+							<option key={r.key} value={r.key} className="bg-[#0a0d09]">
+								{r.label}
+							</option>
+						))}
 					</select>
 				</label>
 				<label className="flex flex-col gap-2">

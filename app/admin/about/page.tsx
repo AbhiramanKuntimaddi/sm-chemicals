@@ -1,12 +1,16 @@
-import { requireRole, DEV_BYPASS } from "@/lib/auth";
+import { requirePermission, DEV_BYPASS } from "@/lib/auth";
 import { getSetting } from "@/lib/cms/settings";
 import { defaultAbout, type AboutContent } from "@/data/about";
-import { AboutForm } from "./AboutForms";
+import {
+	AboutValuesForm,
+	AboutTimelineForm,
+	AboutCertsForm,
+} from "./AboutForms";
 
 export const metadata = { title: "About" };
 
 export default async function AboutAdmin() {
-	await requireRole("editor");
+	await requirePermission("about");
 	const about = await getSetting<AboutContent>("about", defaultAbout);
 
 	return (
@@ -23,7 +27,8 @@ export default async function AboutAdmin() {
 				</h1>
 				<p className="mt-6 text-white/45 text-sm font-light tracking-wide">
 					Edit the purpose cards, milestones timeline and certifications shown on
-					the About page. Icons stay fixed by position.
+					the About page. Each section saves on its own. Icons stay fixed by
+					position.
 				</p>
 				{DEV_BYPASS && (
 					<p className="mt-4 inline-block border border-amber-400/40 bg-amber-400/10 px-4 py-2 text-amber-300 text-xs font-medium tracking-wide">
@@ -32,7 +37,11 @@ export default async function AboutAdmin() {
 				)}
 			</div>
 
-			<AboutForm about={about} />
+			<div className="space-y-10">
+				<AboutValuesForm section={about.values} />
+				<AboutTimelineForm section={about.timeline} />
+				<AboutCertsForm section={about.certifications} />
+			</div>
 		</div>
 	);
 }

@@ -1,4 +1,4 @@
-import { requireRole, DEV_BYPASS } from "@/lib/auth";
+import { requirePermission, DEV_BYPASS } from "@/lib/auth";
 import { getSetting } from "@/lib/cms/settings";
 import { defaultCareers, type CareersContent } from "@/data/careers";
 import { CareersForm } from "./CareersForms";
@@ -6,7 +6,7 @@ import { CareersForm } from "./CareersForms";
 export const metadata = { title: "Careers" };
 
 export default async function CareersAdmin() {
-	await requireRole("editor");
+	await requirePermission("careers");
 	const careers = await getSetting<CareersContent>("careers", defaultCareers);
 
 	return (

@@ -1,11 +1,11 @@
-import { requireRole } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { getCatalog, catalogTotals } from "@/lib/cms/products";
 import { ProductsManager } from "./ProductsManager";
 
 export const metadata = { title: "Products" };
 
 export default async function ProductsAdmin() {
-	await requireRole("editor");
+	await requirePermission("products");
 	const categories = await getCatalog();
 	const totals = catalogTotals(categories);
 

@@ -1,4 +1,4 @@
-import { requireRole, DEV_BYPASS } from "@/lib/auth";
+import { requirePermission, DEV_BYPASS } from "@/lib/auth";
 import {
 	getActivityLog,
 	ACTION_LABELS,
@@ -21,7 +21,7 @@ export default async function ActivityAdmin({
 }: {
 	searchParams: Promise<{ filter?: string }>;
 }) {
-	await requireRole("admin");
+	await requirePermission("activity");
 	const { filter } = await searchParams;
 	const active = filter && ACTIVITY_FILTERS[filter] ? filter : "all";
 	const entries = await getActivityLog(active === "all" ? undefined : active);

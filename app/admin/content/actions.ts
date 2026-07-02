@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireRole, DEV_BYPASS } from "@/lib/auth";
+import { requirePermission, DEV_BYPASS } from "@/lib/auth";
 import { supabaseConfigured } from "@/lib/cms/products";
 import { logActivity } from "@/lib/cms/activity";
 import type { ContactContent, HomeContent, StatItem } from "@/data/content";
@@ -32,7 +32,7 @@ export async function saveHome(
 	_prev: ContentState,
 	formData: FormData,
 ): Promise<ContentState> {
-	await requireRole("editor");
+	await requirePermission("content");
 	if (DEV_BYPASS && !supabaseConfigured()) return { error: DEV_NOTICE };
 
 	const count = Number(formData.get("statCount") ?? 0);
@@ -70,7 +70,7 @@ export async function saveContact(
 	_prev: ContentState,
 	formData: FormData,
 ): Promise<ContentState> {
-	await requireRole("editor");
+	await requirePermission("content");
 	if (DEV_BYPASS && !supabaseConfigured()) return { error: DEV_NOTICE };
 
 	const contact: ContactContent = {

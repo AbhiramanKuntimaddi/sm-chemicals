@@ -3,29 +3,39 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireRole, DEV_BYPASS, type Role } from "@/lib/auth";
+import { requirePermission, DEV_BYPASS, type Role } from "@/lib/auth";
 import { supabaseConfigured } from "@/lib/cms/products";
 import { logActivity } from "@/lib/cms/activity";
 
 export type TeamResult = { ok?: boolean; error?: string };
 export type CreateUserState = { error?: string; ok?: string };
 
-const ROLES = ["founder", "admin", "editor"] as const;
-
 const DEV_NOTICE = "Dev mode — connect Supabase to manage real users.";
 
 const CreateUserSchema = z.object({
 	email: z.string().email(),
-	role: z.enum(["admin", "editor"]),
+	role: z.string().trim().min(1),
 	password: z.string().min(8, "Password must be at least 8 characters."),
 	full_name: z.string().optional(),
 });
+
+async function roleExists(
+	admin: ReturnType<typeof createAdminClient>,
+	role: string,
+): Promise<boolean> {
+	const { data } = await admin
+		.from("roles")
+		.select("key")
+		.eq("key", role)
+		.maybeSingle();
+	return Boolean(data);
+}
 
 export async function createUser(
 	_prev: CreateUserState,
 	formData: FormData,
 ): Promise<CreateUserState> {
-	await requireRole("admin");
+	await requirePermission("users");
 	if (DEV_BYPASS && !supabaseConfigured()) return { error: DEV_NOTICE };
 
 	const parsed = CreateUserSchema.safeParse({
@@ -43,6 +53,8 @@ export async function createUser(
 	}
 
 	const admin = createAdminClient();
+	if (!(await roleExists(admin, parsed.data.role)))
+		return { error: "Unknown role." };
 	const { data, error } = await admin.auth.admin.createUser({
 		email: parsed.data.email,
 		password: parsed.data.password,
@@ -92,10 +104,12 @@ export async function updateUserRole(
 	id: string,
 	role: string,
 ): Promise<TeamResult> {
-	const actor = await requireRole("admin");
+	const actor = await requirePermission("users");
 	if (DEV_BYPASS && !supabaseConfigured()) return { error: DEV_NOTICE };
-	if (!ROLES.includes(role as Role)) return { error: "Invalid role." };
-	const next = role as Role;
+	const adminCheck = createAdminClient();
+	if (!(await roleExists(adminCheck, role)))
+		return { error: "Invalid role." };
+	const next = role;
 	if (id === actor.id) return { error: "You can't change your own role." };
 
 	const target = await loadTarget(id);
@@ -125,7 +139,7 @@ export async function updateUserRole(
 }
 
 export async function deleteUser(id: string): Promise<TeamResult> {
-	const actor = await requireRole("admin");
+	const actor = await requirePermission("users");
 	if (DEV_BYPASS && !supabaseConfigured()) return { error: DEV_NOTICE };
 	if (id === actor.id) return { error: "You can't remove your own account." };
 
@@ -148,7 +162,7 @@ export async function resetUserPassword(
 	id: string,
 	password: string,
 ): Promise<TeamResult> {
-	const actor = await requireRole("admin");
+	const actor = await requirePermission("users");
 	if (DEV_BYPASS && !supabaseConfigured()) return { error: DEV_NOTICE };
 	if (!password || password.length < 8)
 		return { error: "Password must be at least 8 characters." };

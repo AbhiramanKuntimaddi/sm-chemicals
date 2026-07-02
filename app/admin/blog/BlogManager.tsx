@@ -7,9 +7,11 @@ import {
 	useState,
 	useTransition,
 } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { Plus, Pencil, Trash2, X, Upload } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Upload, ArrowLeft, Eye } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { RichText } from "@/components/admin/rich-text";
 import { savePost, deletePost, type BlogState } from "./actions";
 import type { BlogPost } from "@/data/blog";
 
@@ -22,6 +24,14 @@ const btnPrimary =
 
 function fmt(iso: string | null) {
 	return iso ? new Date(iso).toLocaleDateString() : "—";
+}
+
+function slugify(s: string): string {
+	return s
+		.toLowerCase()
+		.trim()
+		.replace(/[^a-z0-9]+/g, "-")
+		.replace(/^-+|-+$/g, "");
 }
 
 export function BlogManager({ posts }: { posts: BlogPost[] }) {
@@ -83,6 +93,16 @@ export function BlogManager({ posts }: { posts: BlogPost[] }) {
 								</span>
 							</div>
 							<div className="flex shrink-0 items-center gap-2">
+								<a
+									href={`/preview?path=/blog/${p.slug}`}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="p-2 text-white/45 transition-colors hover:text-accent-500 cursor-pointer"
+									aria-label="Preview"
+									title="Preview"
+								>
+									<Eye size={15} />
+								</a>
 								<button
 									type="button"
 									onClick={() => setEditing(p)}
@@ -135,8 +155,12 @@ function PostEditor({
 	);
 	const supabase = useMemo(() => createClient(), []);
 	const [coverUrl, setCoverUrl] = useState(post?.coverImage ?? "");
+	const [body, setBody] = useState(post?.body ?? "");
 	const [uploading, setUploading] = useState(false);
 	const [imgErr, setImgErr] = useState<string | null>(null);
+	const [title, setTitle] = useState(post?.title ?? "");
+	const [slug, setSlug] = useState(post?.slug ?? "");
+	const [slugTouched] = useState(Boolean(post));
 
 	useEffect(() => {
 		if (state.ok) onSaved();
@@ -176,21 +200,43 @@ function PostEditor({
 		setUploading(false);
 	};
 
-	return (
-		<div className="fixed inset-0 z-[1100] flex justify-end">
-			<div
-				className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-				onClick={onClose}
-			/>
-			<div className="relative h-full w-full max-w-2xl overflow-y-auto border-l border-white/10 bg-[#0a0d09] shadow-2xl">
-				<div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-[#0a0d09] px-8 py-6">
-					<div className="flex items-center gap-3">
-						<span className="h-px w-5 bg-accent-500" />
-						<span className="uppercase tracking-[0.3em] text-accent-500 text-[0.6rem] font-black">
-							{post ? "Edit post" : "New post"}
-						</span>
-					</div>
+	if (typeof document === "undefined") return null;
+
+	return createPortal(
+		<div className="fixed inset-0 z-[1100] flex flex-col bg-[#0a0d09]">
+			<div className="flex flex-none items-center justify-between gap-4 border-b border-white/10 px-6 py-4 md:px-10">
+				<div className="flex items-center gap-5">
 					<button
+						type="button"
+						onClick={onClose}
+						className="inline-flex items-center gap-2 text-white/60 transition-colors hover:text-white cursor-pointer"
+					>
+						<ArrowLeft size={16} />
+						<span className="uppercase tracking-[0.2em] text-[0.6rem] font-black">
+							Back
+						</span>
+					</button>
+					<span className="h-4 w-px bg-white/15" />
+					<span className="uppercase tracking-[0.3em] text-accent-500 text-[0.6rem] font-black">
+						{post ? "Edit post" : "New post"}
+					</span>
+				</div>
+				<div className="flex items-center gap-5">
+					{state.error && (
+						<span className="hidden text-red-400 text-xs sm:inline">
+							{state.error}
+						</span>
+					)}
+					<button
+						type="submit"
+						form="post-editor-form"
+						disabled={pending}
+						className={btnPrimary}
+					>
+						{pending ? "Saving…" : post ? "Save post" : "Create post"}
+					</button>
+					<button
+						type="button"
 						onClick={onClose}
 						className="text-white/40 hover:text-white transition-colors cursor-pointer"
 						aria-label="Close"
@@ -198,8 +244,14 @@ function PostEditor({
 						<X size={20} />
 					</button>
 				</div>
+			</div>
 
-				<form action={formAction} className="p-8">
+			<div className="flex-1 overflow-y-auto">
+				<form
+					id="post-editor-form"
+					action={formAction}
+					className="mx-auto max-w-3xl px-6 py-10 md:px-10 md:py-12"
+				>
 					{post && <input type="hidden" name="id" value={post.id} />}
 					<input type="hidden" name="cover_image_url" value={coverUrl} />
 
@@ -208,19 +260,28 @@ function PostEditor({
 							<span className={labelCls}>Title</span>
 							<input
 								name="title"
-								defaultValue={post?.title}
+								value={title}
+								onChange={(e) => {
+									setTitle(e.target.value);
+									if (!slugTouched) setSlug(slugify(e.target.value));
+								}}
 								required
 								placeholder="Post title"
 								className={inputCls}
 							/>
 						</label>
 						<label className="flex flex-col gap-1.5">
-							<span className={labelCls}>Slug (optional — from title)</span>
+							<span className={labelCls}>
+								Slug{" "}
+								<span className="text-white/25">/blog/{slug || "…"}</span>
+							</span>
 							<input
 								name="slug"
-								defaultValue={post?.slug}
-								placeholder="my-post"
-								className={inputCls}
+								value={slug}
+								readOnly
+								tabIndex={-1}
+								placeholder="auto-filled from title"
+								className={`${inputCls} cursor-default text-white/50`}
 							/>
 						</label>
 						<label className="flex flex-col gap-1.5">
@@ -265,16 +326,11 @@ function PostEditor({
 							{imgErr && <span className="text-red-400 text-xs">{imgErr}</span>}
 						</div>
 
-						<label className="flex flex-col gap-1.5">
-							<span className={labelCls}>Body (HTML)</span>
-							<textarea
-								name="body"
-								defaultValue={post?.body}
-								rows={16}
-								placeholder="<p>Write your post in HTML…</p>"
-								className={`${inputCls} resize-y font-mono text-xs leading-relaxed`}
-							/>
-						</label>
+						<div className="flex flex-col gap-1.5">
+							<span className={labelCls}>Body</span>
+							<RichText value={post?.body ?? ""} onChange={setBody} />
+							<input type="hidden" name="body" value={body} />
+						</div>
 
 						<label className="flex items-center gap-3 pt-2 cursor-pointer">
 							<input
@@ -289,16 +345,12 @@ function PostEditor({
 						</label>
 					</div>
 
-					<div className="mt-8 flex items-center gap-4">
-						<button type="submit" disabled={pending} className={btnPrimary}>
-							{pending ? "Saving…" : post ? "Save post" : "Create post"}
-						</button>
-						{state.error && (
-							<span className="text-red-400 text-xs">{state.error}</span>
-						)}
-					</div>
+					{state.error && (
+						<p className="mt-8 text-red-400 text-xs">{state.error}</p>
+					)}
 				</form>
 			</div>
-		</div>
+		</div>,
+		document.body,
 	);
 }

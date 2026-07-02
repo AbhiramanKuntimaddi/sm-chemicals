@@ -15,3 +15,4 @@ node_modules/
 # Supabase (migrations + setup, managed outside the repo)
 supabase/migrations/
 supabase/README.md
+supabase/dev-seed.sql

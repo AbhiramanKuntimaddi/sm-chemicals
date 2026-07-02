@@ -48,7 +48,7 @@ export default async function PostPage({
 							href="/blog"
 							className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.3em] text-text-400 hover:text-accent-500 transition-colors mb-8"
 						>
-							<span>←</span> Journal
+							<span>←</span> Blog
 						</Link>
 						<span className="block text-[11px] font-black uppercase tracking-[0.3em] text-accent-500 mb-4">
 							{fmtDate(post.publishedAt)}
@@ -77,7 +77,7 @@ export default async function PostPage({
 							</div>
 						)}
 						<div
-							className="max-w-none text-text-800 text-lg font-light leading-relaxed [&_h2]:mt-10 [&_h2]:mb-4 [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:tracking-tight [&_h2]:text-text-950 [&_h3]:mt-8 [&_h3]:mb-3 [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-text-950 [&_p]:mb-5 [&_a]:text-accent-700 [&_a]:underline [&_ul]:mb-5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:mb-5 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-2 [&_strong]:font-bold [&_strong]:text-text-950 [&_img]:my-6 [&_img]:rounded-sm [&_blockquote]:my-6 [&_blockquote]:border-l-2 [&_blockquote]:border-accent-500 [&_blockquote]:pl-4 [&_blockquote]:italic"
+							className="max-w-none text-text-800 text-lg font-light leading-relaxed [&_h1]:mt-10 [&_h1]:mb-4 [&_h1]:text-3xl [&_h1]:font-bold [&_h1]:tracking-tight [&_h1]:text-text-950 [&_h2]:mt-10 [&_h2]:mb-4 [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:tracking-tight [&_h2]:text-text-950 [&_h3]:mt-8 [&_h3]:mb-3 [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-text-950 [&_p]:mb-5 [&_u]:underline [&_s]:line-through [&_mark]:rounded [&_mark]:bg-accent-500/30 [&_mark]:px-0.5 [&_a]:text-accent-700 [&_a]:underline [&_code]:rounded [&_code]:bg-text-950/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.85em] [&_pre]:my-6 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:bg-text-950 [&_pre]:p-4 [&_pre]:font-mono [&_pre]:text-sm [&_pre]:text-background-50 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:text-background-50 [&_hr]:my-8 [&_hr]:border-background-200 [&_ul]:mb-5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:mb-5 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-2 [&_strong]:font-bold [&_strong]:text-text-950 [&_img]:my-6 [&_img]:max-w-full [&_img]:rounded-sm [&_blockquote]:my-6 [&_blockquote]:border-l-2 [&_blockquote]:border-accent-500 [&_blockquote]:pl-4 [&_blockquote]:italic [&_table]:my-6 [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-background-200 [&_th]:bg-background-100 [&_th]:p-2.5 [&_th]:text-left [&_th]:font-bold [&_th]:text-text-950 [&_td]:border [&_td]:border-background-200 [&_td]:p-2.5"
 							dangerouslySetInnerHTML={{ __html: post.body }}
 						/>
 
@@ -86,7 +86,7 @@ export default async function PostPage({
 								href="/blog"
 								className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.3em] text-text-950 hover:text-accent-700 transition-colors"
 							>
-								<span>←</span> Back to Journal
+								<span>←</span> Back to Blogs
 							</Link>
 						</div>
 					</div>

@@ -1,3 +1,4 @@
+import { draftMode } from "next/headers";
 import { createPublicClient } from "@/lib/supabase/public";
 import { createClient } from "@/lib/supabase/server";
 import { getSetting } from "@/lib/cms/settings";
@@ -83,18 +84,38 @@ async function published<T>(key: SnapshotKey): Promise<T | null> {
 	}
 }
 
+// In Draft Mode (staff clicked "Preview draft") the public pages read the live
+// DRAFT instead of the published snapshot, so unpublished edits are visible.
+async function isDraft(): Promise<boolean> {
+	try {
+		return (await draftMode()).isEnabled;
+	} catch {
+		return false;
+	}
+}
+
 // Public-site reads: the published snapshot, falling back to the static
 // defaults so the site always renders (pre-publish, or with no Supabase).
 export const getPublishedHome = async (): Promise<HomeContent> =>
-	(await published<HomeContent>("home")) ?? defaultHome;
+	(await isDraft())
+		? getSetting<HomeContent>("home", defaultHome)
+		: ((await published<HomeContent>("home")) ?? defaultHome);
 export const getPublishedContact = async (): Promise<ContactContent> =>
-	(await published<ContactContent>("contact")) ?? defaultContact;
+	(await isDraft())
+		? getSetting<ContactContent>("contact", defaultContact)
+		: ((await published<ContactContent>("contact")) ?? defaultContact);
 export const getPublishedAbout = async (): Promise<AboutContent> =>
-	(await published<AboutContent>("about")) ?? defaultAbout;
+	(await isDraft())
+		? getSetting<AboutContent>("about", defaultAbout)
+		: ((await published<AboutContent>("about")) ?? defaultAbout);
 export const getPublishedCareers = async (): Promise<CareersContent> =>
-	(await published<CareersContent>("careers")) ?? defaultCareers;
+	(await isDraft())
+		? getSetting<CareersContent>("careers", defaultCareers)
+		: ((await published<CareersContent>("careers")) ?? defaultCareers);
 export const getPublishedCatalog = async (): Promise<ProductCategory[]> =>
-	(await published<ProductCategory[]>("products")) ?? productCategories;
+	(await isDraft())
+		? getCatalog()
+		: ((await published<ProductCategory[]>("products")) ?? productCategories);
 
 export type PageStatus = "unpublished" | "clean" | "dirty";
 

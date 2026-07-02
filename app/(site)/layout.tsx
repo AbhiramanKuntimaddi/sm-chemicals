@@ -1,6 +1,8 @@
+import { draftMode } from 'next/headers'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { SmoothScroll } from '@/components/providers/smooth-scroll'
+import { PreviewBanner } from '@/components/preview-banner'
 import { getPublishedContact } from '@/lib/cms/snapshots'
 import { SITE } from '@/lib/site'
 
@@ -10,6 +12,7 @@ export default async function SiteLayout({
   children: React.ReactNode
 }>) {
   const contact = await getPublishedContact()
+  const { isEnabled: isDraft } = await draftMode()
 
   const orgJsonLd = {
     '@context': 'https://schema.org',
@@ -39,6 +42,7 @@ export default async function SiteLayout({
       <Header />
       <main>{children}</main>
       <Footer phone={contact.phone} email={contact.email} />
+      {isDraft && <PreviewBanner />}
     </SmoothScroll>
   )
 }

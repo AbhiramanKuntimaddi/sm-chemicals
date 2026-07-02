@@ -8,17 +8,18 @@ import {
 	resetUserPassword,
 } from "./actions";
 import type { Member } from "@/lib/cms/users";
-
-const ROLE_OPTIONS = ["founder", "admin", "editor"];
+import type { RoleRow } from "@/lib/cms/roles";
 
 function Row({
 	member,
 	currentUserId,
 	currentRole,
+	roles,
 }: {
 	member: Member;
 	currentUserId: string;
 	currentRole: string;
+	roles: RoleRow[];
 }) {
 	const router = useRouter();
 	const [pending, start] = useTransition();
@@ -63,9 +64,13 @@ function Row({
 						}
 						className="cursor-pointer border border-white/15 bg-transparent px-3 py-2 text-white text-[0.7rem] font-bold uppercase tracking-[0.18em] outline-none transition-colors focus:border-accent-500 disabled:cursor-not-allowed disabled:text-white/30"
 					>
-						{ROLE_OPTIONS.map((r) => (
-							<option key={r} value={r} className="bg-[#0a0d09] normal-case">
-								{r.charAt(0).toUpperCase() + r.slice(1)}
+						{roles.map((r) => (
+							<option
+								key={r.key}
+								value={r.key}
+								className="bg-[#0a0d09] normal-case"
+							>
+								{r.label}
 							</option>
 						))}
 					</select>
@@ -147,10 +152,12 @@ export function UsersManager({
 	members,
 	currentUserId,
 	currentRole,
+	roles,
 }: {
 	members: Member[];
 	currentUserId: string;
 	currentRole: string;
+	roles: RoleRow[];
 }) {
 	return (
 		<div className="flex flex-col">
@@ -160,6 +167,7 @@ export function UsersManager({
 					member={m}
 					currentUserId={currentUserId}
 					currentRole={currentRole}
+					roles={roles}
 				/>
 			))}
 		</div>

@@ -1,4 +1,4 @@
-import { requireRole, DEV_BYPASS } from "@/lib/auth";
+import { requirePermission, DEV_BYPASS } from "@/lib/auth";
 import { getSetting } from "@/lib/cms/settings";
 import {
 	defaultHome,
@@ -11,7 +11,7 @@ import { HomeForm, ContactForm } from "./ContentForms";
 export const metadata = { title: "Content" };
 
 export default async function ContentAdmin() {
-	await requireRole("editor");
+	await requirePermission("content");
 	const [home, contact] = await Promise.all([
 		getSetting<HomeContent>("home", defaultHome),
 		getSetting<ContactContent>("contact", defaultContact),

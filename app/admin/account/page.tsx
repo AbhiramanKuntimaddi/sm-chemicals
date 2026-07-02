@@ -1,10 +1,10 @@
-import { requireRole } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
 import { AccountForms } from "./AccountForms";
 
 export const metadata = { title: "Account" };
 
 export default async function AccountPage() {
-	const profile = await requireRole("editor");
+	const profile = await requireStaff();
 
 	return (
 		<div className="mx-auto max-w-2xl px-6 py-16 md:px-10 md:py-20">

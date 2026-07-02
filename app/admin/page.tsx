@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireRole } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
 import { getDrafts, type SnapshotKey, type PageStatus } from "@/lib/cms/snapshots";
 import { getCatalog, catalogTotals } from "@/lib/cms/products";
 import { getAllPosts } from "@/lib/cms/blog";
@@ -12,6 +12,7 @@ const SECTIONS: {
 	href: string;
 	view: string;
 	keys: SnapshotKey[];
+	section: string;
 }[] = [
 	{
 		label: "Products",
@@ -19,6 +20,7 @@ const SECTIONS: {
 		href: "/admin/products",
 		view: "/products",
 		keys: ["products"],
+		section: "products",
 	},
 	{
 		label: "Content",
@@ -26,6 +28,7 @@ const SECTIONS: {
 		href: "/admin/content",
 		view: "/",
 		keys: ["home", "contact"],
+		section: "content",
 	},
 	{
 		label: "About",
@@ -33,6 +36,7 @@ const SECTIONS: {
 		href: "/admin/about",
 		view: "/about",
 		keys: ["about"],
+		section: "about",
 	},
 	{
 		label: "Careers",
@@ -40,6 +44,7 @@ const SECTIONS: {
 		href: "/admin/careers",
 		view: "/careers",
 		keys: ["careers"],
+		section: "careers",
 	},
 	{
 		label: "Blog",
@@ -47,11 +52,12 @@ const SECTIONS: {
 		href: "/admin/blog",
 		view: "/blog",
 		keys: [],
+		section: "blog",
 	},
 ];
 
 export default async function AdminHome() {
-	const profile = await requireRole("editor");
+	const profile = await requireStaff();
 	const [drafts, catalog, posts] = await Promise.all([
 		getDrafts(),
 		getCatalog(),
@@ -64,6 +70,10 @@ export default async function AdminHome() {
 	const blogCount = posts.length;
 	const firstName = (profile.full_name?.trim() || profile.email.split("@")[0])
 		.split(" ")[0];
+	const perms = profile.permissions as string[];
+	const visibleSections = SECTIONS.filter(
+		(s) => profile.role === "founder" || perms.includes(s.section),
+	);
 
 	return (
 		<div className="mx-auto max-w-6xl px-6 py-16 md:px-10 md:py-20">
@@ -85,7 +95,7 @@ export default async function AdminHome() {
 			</div>
 
 			<div className="grid grid-cols-1 border-t border-l border-white/10 sm:grid-cols-2 lg:grid-cols-3">
-				{SECTIONS.map((s) => {
+				{visibleSections.map((s) => {
 					const statuses = s.keys.map((k) => statusByKey.get(k));
 					const pendingState: PageStatus | null = statuses.some(
 						(st) => st === "dirty",

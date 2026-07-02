@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { ContactForm } from "./contact-form";
 import { useSection } from "@/hooks/use-section";
+import { getLenis } from "@/lib/smooth-scroll";
 
 export function ContactInquiry() {
     const scope = useSection<HTMLDivElement>({
@@ -9,8 +11,31 @@ export function ContactInquiry() {
         start: "top 85%",
         exitY: -40,
     });
+    const sectionRef = useRef<HTMLElement>(null);
+
+    useEffect(() => {
+        const scrollToSelf = () => {
+            const el = sectionRef.current;
+            if (!el) return;
+            const lenis = getLenis();
+            if (lenis) lenis.scrollTo(el, { offset: -80 });
+            else el.scrollIntoView({ behavior: "smooth" });
+        };
+        if (sessionStorage.getItem("smc:scrollInquiry")) {
+            sessionStorage.removeItem("smc:scrollInquiry");
+            setTimeout(scrollToSelf, 420);
+        }
+        const onEvent = () => setTimeout(scrollToSelf, 50);
+        window.addEventListener("scroll-to-inquiry", onEvent);
+        return () => window.removeEventListener("scroll-to-inquiry", onEvent);
+    }, []);
+
     return (
-        <section className="py-32 bg-background-50 border-t border-background-200 selection:bg-accent-500 selection:text-black">
+        <section
+            id="inquiry"
+            ref={sectionRef}
+            className="py-32 bg-background-50 border-t border-background-200 selection:bg-accent-500 selection:text-black"
+        >
             <div ref={scope} className="mx-auto max-w-7xl px-6">
                 <div data-reveal className="mb-20 flex flex-col items-center text-center">
                     <h2 className="text-5xl md:text-7xl font-bold tracking-tighter text-text-950 mb-8 leading-none max-w-4xl">
